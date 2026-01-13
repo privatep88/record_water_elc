@@ -206,17 +206,17 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
                   rowSpan={site.rows.length} 
                   className={`${isArchive ? 'bg-gray-100' : 'bg-blue-50/50'} font-bold border-r border-blue-200 p-2 align-middle text-base break-words relative group`}
                 >
-                   <div className="flex items-center justify-center h-full w-full relative">
+                   <div className="flex flex-col items-center justify-center h-full w-full relative">
                        <button 
                          type="button"
                          onClick={(e) => handleAction(siteIndex, site.id, e)}
-                         className={`absolute top-1 left-1 p-1.5 rounded bg-white/60 backdrop-blur-sm transition-all duration-200 print:hidden z-20 cursor-pointer border border-transparent shadow-sm
+                         className={`p-1.5 mb-2 rounded-full shadow-sm border transition-all duration-200 print:hidden z-20 cursor-pointer
                            ${isArchive 
-                             ? 'text-green-600 hover:text-green-800 hover:bg-green-100 hover:border-green-200' 
-                             : 'text-red-500 hover:text-red-700 hover:bg-red-100 opacity-60 hover:opacity-100 hover:border-red-200'}`}
+                             ? 'text-green-600 bg-white border-green-200 hover:bg-green-50' 
+                             : 'text-red-500 bg-white border-red-100 hover:bg-red-50 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0'}`}
                          title={isArchive ? "استعادة الموقع" : "حذف الموقع"}
                        >
-                         {isArchive ? <RotateCcw size={15} /> : <Trash2 size={15} />}
+                         {isArchive ? <RotateCcw size={16} /> : <Trash2 size={16} />}
                        </button>
                        <textarea
                         disabled={isArchive}
@@ -225,7 +225,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
                         className={`w-full bg-transparent text-center border-none focus:ring-2 focus:ring-blue-500 focus:bg-white p-2 resize-none outline-none overflow-hidden whitespace-normal break-words leading-tight rounded ${isArchive ? 'cursor-not-allowed' : 'text-blue-900'}`}
                         placeholder="اسم الموقع"
                         rows={site.rows.length > 2 ? 4 : 2}
-                        style={{ margin: 'auto' }}
+                        style={{ margin: '0 auto' }}
                       />
                    </div>
                 </td>
