@@ -1,0 +1,5 @@
+{
+  "name": "Saher Utility Dashboard",
+  "description": "A comprehensive utility consumption tracking dashboard for water, electricity, and HVAC across multiple sites with automatic calculations.",
+  "requestFramePermissions": []
+}
