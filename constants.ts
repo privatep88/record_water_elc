@@ -1,5 +1,4 @@
-
-import { SiteData, RowType, MonthKey, MONTHS } from './types';
+import { SiteData, RowType, MonthKey, MONTHS } from './types.ts';
 
 const createEmptyValues = (): Record<MonthKey, number> => {
   const values: any = {};

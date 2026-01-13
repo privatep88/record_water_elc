@@ -52,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({ currentYear, onYearChange }) => {
               <span className="text-yellow-500 text-lg font-bold tracking-wider mb-2 shadow-black drop-shadow-sm px-3 py-0.5 rounded bg-blue-950/30 border border-blue-900/30 backdrop-blur-sm">
                 إدارة الخدمات العامة / قسم إدارة المرافق
               </span>
-              <h1 className="text-xl md:text-2xl font-bold text-white leading-tight opacity-95 whitespace-nowrap drop-shadow-md">
+              <h1 className="text-lg md:text-xl font-bold text-white leading-tight opacity-95 whitespace-nowrap drop-shadow-md">
                 نظام تسجيل نسبة استهلاك الماء والكهرباء لمقرات ساهر
               </h1>
           </div>

@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import ConsumptionTable from './components/ConsumptionTable';
-import { INITIAL_SITES } from './constants';
-import { SiteData } from './types';
+import Header from './components/Header.tsx';
+import Footer from './components/Footer.tsx';
+import ConsumptionTable from './components/ConsumptionTable.tsx';
+import { INITIAL_SITES } from './constants.ts';
+import { SiteData } from './types.ts';
 
 // Storage Keys
 const STORAGE_KEYS = {
@@ -32,6 +32,7 @@ function App() {
       const saved = localStorage.getItem(STORAGE_KEYS.TEMPLATE);
       return saved ? JSON.parse(saved) : getInitialData();
     } catch (e) {
+      console.warn("Error reading template from storage", e);
       return getInitialData();
     }
   });
@@ -41,6 +42,7 @@ function App() {
       const saved = localStorage.getItem(STORAGE_KEYS.DATA);
       return saved ? JSON.parse(saved) : {};
     } catch (e) {
+      console.warn("Error reading data from storage", e);
       return {};
     }
   });
@@ -54,27 +56,32 @@ function App() {
     }
   });
 
-  // Auto-save Effect: Saves whenever data changes
-  useEffect(() => {
+  // Safe Save Function to handle QuotaExceededError
+  const saveData = useCallback((key: string, data: any) => {
     try {
-      localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(dataByYear));
-      localStorage.setItem(STORAGE_KEYS.TEMPLATE, JSON.stringify(templateSites));
-      localStorage.setItem(STORAGE_KEYS.ARCHIVES, JSON.stringify(archivesByYear));
-    } catch (e) {
-      console.error("Failed to save to localStorage", e);
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (e: any) {
+      if (e.name === 'QuotaExceededError' || e.code === 22) {
+        alert("تنبيه: ذاكرة المتصفح ممتلئة. قد لا يتم حفظ التعديلات الأخيرة أو المرفقات الكبيرة.");
+      } else {
+        console.error(`Failed to save ${key}`, e);
+      }
     }
-  }, [dataByYear, templateSites, archivesByYear]);
+  }, []);
+
+  // Auto-save Effect
+  useEffect(() => {
+    saveData(STORAGE_KEYS.DATA, dataByYear);
+    saveData(STORAGE_KEYS.TEMPLATE, templateSites);
+    saveData(STORAGE_KEYS.ARCHIVES, archivesByYear);
+  }, [dataByYear, templateSites, archivesByYear, saveData]);
 
   // Manual Save Handler
   const handleManualSave = useCallback(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(dataByYear));
-      localStorage.setItem(STORAGE_KEYS.TEMPLATE, JSON.stringify(templateSites));
-      localStorage.setItem(STORAGE_KEYS.ARCHIVES, JSON.stringify(archivesByYear));
-    } catch (e) {
-      console.error("Failed to save manually", e);
-    }
-  }, [dataByYear, templateSites, archivesByYear]);
+    saveData(STORAGE_KEYS.DATA, dataByYear);
+    saveData(STORAGE_KEYS.TEMPLATE, templateSites);
+    saveData(STORAGE_KEYS.ARCHIVES, archivesByYear);
+  }, [dataByYear, templateSites, archivesByYear, saveData]);
 
   // Get the data for the currently selected year.
   // If no data exists for this year, generate a fresh copy based on the CURRENT template.
@@ -106,12 +113,10 @@ function App() {
 
   // Handle global site addition (updates ALL years and the template)
   const handleGlobalAddSite = (newSite: SiteData) => {
-    // 1. Update the template so any future years accessed (that don't exist in dataByYear yet) will have this site
-    // We use deep copy to ensure the template has its own unique references
+    // 1. Update the template
     setTemplateSites(prev => [...prev, JSON.parse(JSON.stringify(newSite))]);
 
-    // 2. Update ONLY the years that have already been instantiated (edited by user)
-    // Years that haven't been visited/edited yet will automatically pick up the new Template when visited.
+    // 2. Update ONLY the years that have already been instantiated
     setDataByYear(prev => {
       const updatedDataByYear = { ...prev };
       
@@ -124,21 +129,12 @@ function App() {
         }
       };
 
-      // Always try to update the current year if it exists in the dictionary. 
-      // If it doesn't exist in the dictionary, it means the user is viewing the 'Template' version directly.
-      // In that case, we MUST initialize the current year in the dictionary now, so the user sees the new site immediately 
-      // and can start editing without losing the new site.
       if (!updatedDataByYear[currentYear]) {
-        // If current year not in state, initialize it from the *current* template (which doesn't have the new site yet in this closure)
-        // PLUS the new site.
         updatedDataByYear[currentYear] = [...templateSites, JSON.parse(JSON.stringify(newSite))]; 
-        // Note: We use 'templateSites' from state, which might be slightly stale vs step 1, but logically correct for base data.
-        // To be safer, we assume templateSites is the base, and we append newSite.
       } else {
         appendSiteToYear(currentYear);
       }
 
-      // Update all FUTURE years that already exist in the history
       Object.keys(updatedDataByYear).forEach(key => {
         const yearKey = Number(key);
         if (yearKey > currentYear) {
@@ -150,20 +146,17 @@ function App() {
     });
   };
 
-  // Handle updates to site metadata (Name, Meter Number) across ALL years
+  // Handle updates to site metadata
   const handleSiteMetadataUpdate = (siteId: string, updates: Partial<SiteData>) => {
     const updateList = (list: SiteData[]) => list.map(s => {
       if (s.id === siteId) {
-        // Merging updates (name/meter) does not affect the nested 'rows' array structure or values
         return { ...s, ...updates };
       }
       return s;
     });
 
-    // 1. Update Template
     setTemplateSites(prev => updateList(prev));
 
-    // 2. Update All Years (Past, Present, Future - metadata should stay synced)
     setDataByYear(prev => {
       const next = { ...prev };
       Object.keys(next).forEach(key => {
@@ -173,7 +166,6 @@ function App() {
       return next;
     });
 
-    // 3. Update Archives
     setArchivesByYear(prev => {
       const next = { ...prev };
       Object.keys(next).forEach(key => {
@@ -184,34 +176,28 @@ function App() {
     });
   };
 
-  // Handle moving a site to the archive
   const handleArchiveSite = (siteId: string) => {
     const siteToArchive = currentSitesData.find(s => s.id === siteId);
     if (!siteToArchive) return;
 
-    // Remove from active list
     const newActiveData = currentSitesData.filter(s => s.id !== siteId);
     handleDataChange(newActiveData);
 
-    // Add to archive list for this year
     setArchivesByYear(prev => ({
       ...prev,
       [currentYear]: [...(prev[currentYear] || []), siteToArchive]
     }));
   };
 
-  // Handle restoring a site from the archive
   const handleRestoreSite = (siteId: string) => {
     const siteToRestore = currentArchivedData.find(s => s.id === siteId);
     if (!siteToRestore) return;
 
-    // Remove from archive list
     setArchivesByYear(prev => ({
       ...prev,
       [currentYear]: prev[currentYear].filter(s => s.id !== siteId)
     }));
 
-    // Add back to active list
     handleDataChange([...currentSitesData, siteToRestore]);
   };
 
