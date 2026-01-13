@@ -13,7 +13,7 @@ const Header: React.FC<HeaderProps> = ({ currentYear, onYearChange }) => {
   const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 
   return (
-    <header className="bg-[#091526] border-b border-blue-900 shadow-xl sticky top-0 z-50 h-20">
+    <header className="bg-[#091526] border-b border-blue-900 shadow-xl sticky top-0 z-50 h-20 print:hidden">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 h-full relative">
         <div className="flex justify-between items-center h-full">
           
@@ -32,10 +32,10 @@ const Header: React.FC<HeaderProps> = ({ currentYear, onYearChange }) => {
 
           {/* Centered Title Section - Absolute Center */}
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col justify-center items-center text-center w-full pointer-events-none hidden md:flex z-10">
-              <span className="text-yellow-500 text-xs font-bold tracking-wider mb-1 shadow-black drop-shadow-sm px-2">
+              <span className="text-yellow-500 text-sm md:text-base font-bold tracking-wider mb-1 shadow-black drop-shadow-sm px-2">
                 إدارة الخدمات العامة / قسم إدارة المرافق
               </span>
-              <h1 className="text-lg font-bold text-white leading-tight opacity-95 whitespace-nowrap" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+              <h1 className="text-xl md:text-2xl font-bold text-white leading-tight opacity-95 whitespace-nowrap" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
                 نظام تسجيل نسبة استهلاك الماء والكهرباء لمقرات ساهر
               </h1>
           </div>

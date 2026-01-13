@@ -19,6 +19,36 @@
       input[type=number] {
         -moz-appearance: textfield;
       }
+
+      /* Print Specific Styles */
+      @media print {
+        @page {
+          size: landscape;
+          margin: 0;
+        }
+        body {
+          margin: 0;
+          padding: 0.5cm;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          background-color: white;
+        }
+        /* Ensure inputs look like text */
+        input, textarea {
+          border: none !important;
+          background: transparent !important;
+          resize: none;
+          box-shadow: none !important;
+        }
+        /* Ensure table fits */
+        .overflow-x-auto {
+          overflow: visible !important;
+        }
+        /* Custom hide class that ensures display none acts correctly */
+        .print\:hidden {
+          display: none !important;
+        }
+      }
     </style>
   <script type="importmap">
 {
@@ -26,7 +56,8 @@
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs"
   }
 }
 </script>

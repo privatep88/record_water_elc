@@ -1,9 +1,16 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ConsumptionTable from './components/ConsumptionTable';
 import { INITIAL_SITES } from './constants';
 import { SiteData } from './types';
+
+// Storage Keys
+const STORAGE_KEYS = {
+  DATA: 'saher_dashboard_data',
+  TEMPLATE: 'saher_dashboard_template',
+  ARCHIVES: 'saher_dashboard_archives'
+};
 
 // Helper function to deep clone the initial data so we don't modify the constant
 const getInitialData = (): SiteData[] => {
@@ -19,14 +26,58 @@ function App() {
     document.title = `نسبة استهلاك الماء والكهرباء - ساهر - ${currentYear}`;
   }, [currentYear]);
 
-  // State to hold the template for sites (used for new years or initializing)
-  const [templateSites, setTemplateSites] = useState<SiteData[]>(() => getInitialData());
+  // State initialization with LocalStorage
+  const [templateSites, setTemplateSites] = useState<SiteData[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.TEMPLATE);
+      return saved ? JSON.parse(saved) : getInitialData();
+    } catch (e) {
+      return getInitialData();
+    }
+  });
+
+  const [dataByYear, setDataByYear] = useState<Record<number, SiteData[]>>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.DATA);
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const [archivesByYear, setArchivesByYear] = useState<Record<number, SiteData[]>>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.ARCHIVES);
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  // Auto-save Effect: Saves whenever data changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(dataByYear));
+      localStorage.setItem(STORAGE_KEYS.TEMPLATE, JSON.stringify(templateSites));
+      localStorage.setItem(STORAGE_KEYS.ARCHIVES, JSON.stringify(archivesByYear));
+    } catch (e) {
+      console.error("Failed to save to localStorage", e);
+    }
+  }, [dataByYear, templateSites, archivesByYear]);
+
+  // Manual Save Handler
+  const handleManualSave = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(dataByYear));
+      localStorage.setItem(STORAGE_KEYS.TEMPLATE, JSON.stringify(templateSites));
+      localStorage.setItem(STORAGE_KEYS.ARCHIVES, JSON.stringify(archivesByYear));
+    } catch (e) {
+      console.error("Failed to save manually", e);
+    }
+  }, [dataByYear, templateSites, archivesByYear]);
 
   // State to hold data for ALL years: { 2025: [...], 2026: [...] }
-  const [dataByYear, setDataByYear] = useState<Record<number, SiteData[]>>({});
-
-  // State to hold ARCHIVED (deleted) data for ALL years
-  const [archivesByYear, setArchivesByYear] = useState<Record<number, SiteData[]>>({});
+  // (State declarations are moved up for localStorage init)
 
   // Get the data for the currently selected year.
   // If no data exists for this year, generate a fresh copy based on the CURRENT template.
@@ -68,9 +119,13 @@ function App() {
         updatedDataByYear[currentYear] = [...updatedDataByYear[currentYear], newSite];
       }
 
-      // Append to all other existing years
+      // Append to all other existing years (CURRENT OR FUTURE ONLY)
       Object.keys(updatedDataByYear).forEach(key => {
         const yearKey = Number(key);
+        
+        // Skip past years - Do not add new sites to years prior to the current one
+        if (yearKey < currentYear) return;
+
         if (yearKey === currentYear) return;
         
         const siteExists = updatedDataByYear[yearKey].some(s => s.id === newSite.id);
@@ -80,6 +135,39 @@ function App() {
       });
 
       return updatedDataByYear;
+    });
+  };
+
+  // Handle updates to site metadata (Name, Meter Number) across ALL years
+  const handleSiteMetadataUpdate = (siteId: string, updates: Partial<SiteData>) => {
+    const updateList = (list: SiteData[]) => list.map(s => {
+      if (s.id === siteId) {
+        return { ...s, ...updates };
+      }
+      return s;
+    });
+
+    // 1. Update Template
+    setTemplateSites(prev => updateList(prev));
+
+    // 2. Update All Years
+    setDataByYear(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(key => {
+        const year = Number(key);
+        next[year] = updateList(next[year]);
+      });
+      return next;
+    });
+
+    // 3. Update Archives
+    setArchivesByYear(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(key => {
+        const year = Number(key);
+        next[year] = updateList(next[year]);
+      });
+      return next;
     });
   };
 
@@ -126,8 +214,10 @@ function App() {
             archivedData={currentArchivedData}
             onDataChange={handleDataChange}
             onAddSite={handleGlobalAddSite}
+            onSiteMetadataUpdate={handleSiteMetadataUpdate}
             onArchiveSite={handleArchiveSite}
             onRestoreSite={handleRestoreSite}
+            onSave={handleManualSave}
           />
         </div>
       </main>
