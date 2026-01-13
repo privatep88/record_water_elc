@@ -76,17 +76,19 @@ function App() {
     }
   }, [dataByYear, templateSites, archivesByYear]);
 
-  // State to hold data for ALL years: { 2025: [...], 2026: [...] }
-  // (State declarations are moved up for localStorage init)
-
   // Get the data for the currently selected year.
   // If no data exists for this year, generate a fresh copy based on the CURRENT template.
   const currentSitesData = useMemo(() => {
+    let data: SiteData[] = [];
     if (dataByYear[currentYear]) {
-      return dataByYear[currentYear];
+      data = dataByYear[currentYear];
+    } else {
+      data = JSON.parse(JSON.stringify(templateSites));
     }
-    // Deep copy the template sites to ensure independence between years
-    return JSON.parse(JSON.stringify(templateSites));
+
+    // Filter out sites that start in a future year relative to the current view.
+    return data.filter(site => !site.startYear || site.startYear <= currentYear);
+
   }, [currentYear, dataByYear, templateSites]);
 
   // Get the archived data for the currently selected year
@@ -104,33 +106,43 @@ function App() {
 
   // Handle global site addition (updates ALL years and the template)
   const handleGlobalAddSite = (newSite: SiteData) => {
-    // 1. Update the template so any future years accessed will have this site
-    setTemplateSites(prev => [...prev, newSite]);
+    // 1. Update the template so any future years accessed (that don't exist in dataByYear yet) will have this site
+    // We use deep copy to ensure the template has its own unique references
+    setTemplateSites(prev => [...prev, JSON.parse(JSON.stringify(newSite))]);
 
-    // 2. Update all existing years in the history to include this new site
+    // 2. Update ONLY the years that have already been instantiated (edited by user)
+    // Years that haven't been visited/edited yet will automatically pick up the new Template when visited.
     setDataByYear(prev => {
       const updatedDataByYear = { ...prev };
       
-      // If the current year isn't in dataByYear yet (it was using templateSites), 
-      // initialize it so the user sees the update immediately
+      const appendSiteToYear = (y: number) => {
+        if (updatedDataByYear[y]) {
+          const exists = updatedDataByYear[y].some(s => s.id === newSite.id);
+          if (!exists) {
+            updatedDataByYear[y] = [...updatedDataByYear[y], JSON.parse(JSON.stringify(newSite))];
+          }
+        }
+      };
+
+      // Always try to update the current year if it exists in the dictionary. 
+      // If it doesn't exist in the dictionary, it means the user is viewing the 'Template' version directly.
+      // In that case, we MUST initialize the current year in the dictionary now, so the user sees the new site immediately 
+      // and can start editing without losing the new site.
       if (!updatedDataByYear[currentYear]) {
-        updatedDataByYear[currentYear] = [...templateSites, newSite];
+        // If current year not in state, initialize it from the *current* template (which doesn't have the new site yet in this closure)
+        // PLUS the new site.
+        updatedDataByYear[currentYear] = [...templateSites, JSON.parse(JSON.stringify(newSite))]; 
+        // Note: We use 'templateSites' from state, which might be slightly stale vs step 1, but logically correct for base data.
+        // To be safer, we assume templateSites is the base, and we append newSite.
       } else {
-        updatedDataByYear[currentYear] = [...updatedDataByYear[currentYear], newSite];
+        appendSiteToYear(currentYear);
       }
 
-      // Append to all other existing years (CURRENT OR FUTURE ONLY)
+      // Update all FUTURE years that already exist in the history
       Object.keys(updatedDataByYear).forEach(key => {
         const yearKey = Number(key);
-        
-        // Skip past years - Do not add new sites to years prior to the current one
-        if (yearKey < currentYear) return;
-
-        if (yearKey === currentYear) return;
-        
-        const siteExists = updatedDataByYear[yearKey].some(s => s.id === newSite.id);
-        if (!siteExists) {
-           updatedDataByYear[yearKey] = [...updatedDataByYear[yearKey], newSite];
+        if (yearKey > currentYear) {
+          appendSiteToYear(yearKey);
         }
       });
 
@@ -142,6 +154,7 @@ function App() {
   const handleSiteMetadataUpdate = (siteId: string, updates: Partial<SiteData>) => {
     const updateList = (list: SiteData[]) => list.map(s => {
       if (s.id === siteId) {
+        // Merging updates (name/meter) does not affect the nested 'rows' array structure or values
         return { ...s, ...updates };
       }
       return s;
@@ -150,7 +163,7 @@ function App() {
     // 1. Update Template
     setTemplateSites(prev => updateList(prev));
 
-    // 2. Update All Years
+    // 2. Update All Years (Past, Present, Future - metadata should stay synced)
     setDataByYear(prev => {
       const next = { ...prev };
       Object.keys(next).forEach(key => {
