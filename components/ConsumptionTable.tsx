@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { SiteData, MONTHS, MonthKey, RowType, ConsumptionRow, Attachment } from '../types.ts';
-import { Save, Printer, Plus, Trash2, Archive, RotateCcw, Upload, Download, MapPin, Hash, Activity, Check, Paperclip, FileText, Image as ImageIcon, FileSpreadsheet, X, File, Eye } from 'lucide-react';
+import { Save, Printer, Plus, Trash2, Archive, RotateCcw, Upload, Download, MapPin, Hash, Activity, Check, Paperclip, FileText, Image as ImageIcon, FileSpreadsheet, X, File, Eye, FolderOpen } from 'lucide-react';
 import { read, utils, writeFile } from 'xlsx';
 
 // Helper to prevent floating point errors
@@ -453,8 +453,8 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
             <td className={`p-2 border-r ${isArchive ? 'border-red-700 bg-red-950' : 'border-slate-600 bg-[#091526]'} text-white align-middle`}>
                <div className="flex items-center justify-center h-full w-full text-center">المجموع</div>
             </td>
-            <td className={`p-2 border-r ${isArchive ? 'border-red-700 bg-red-950' : 'border-slate-600 bg-[#091526]'} text-white w-[50px] align-middle`}>
-               <div className="flex items-center justify-center h-full w-full text-center">المرفقات</div>
+            <td className={`p-2 border-r ${isArchive ? 'border-red-700 bg-red-950' : 'border-slate-600 bg-[#091526]'} text-white w-[40px] align-middle`}>
+               <div className="flex items-center justify-center h-full w-full text-center"><FolderOpen size={16} /></div>
             </td>
           </tr>
         )}
@@ -499,7 +499,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
               <td className={`border-r ${isArchive ? 'border-red-200' : 'border-blue-200'} font-bold align-middle px-1 break-all text-xs sm:text-sm ${isArchive ? 'bg-red-100 text-red-900' : 'bg-yellow-50/50 text-slate-800'}`}>
                 <div className="flex items-center justify-center w-full h-full">{formatNumber(rowTotal)}</div>
               </td>
-              <td className={`border-r ${isArchive ? 'border-red-200' : 'border-blue-200'} align-middle px-1 w-[50px]`}>
+              <td className={`border-r ${isArchive ? 'border-red-200' : 'border-blue-200'} align-middle px-1 w-[40px]`}>
                 <div className="flex flex-col items-center justify-center w-full h-full gap-1 p-1">
                   {row.attachments && row.attachments.length > 0 && (
                      <div className="flex flex-wrap gap-1 justify-center mb-1 max-w-[100px]">
@@ -548,10 +548,10 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
             <tr className="bg-[#334155] text-white font-bold border-b border-slate-600">
               <th className="p-3 border-r border-slate-600 w-[180px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><MapPin size={16} className="text-white" /><span>الموقع</span></div></th>
               <th className="p-3 border-r border-slate-600 w-[120px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Hash size={16} className="text-white" /><span>رقم العداد</span></div></th>
-              <th className="p-3 border-r border-slate-600 w-[140px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Activity size={16} className="text-white" /><span>نوع الاستهلاك</span></div></th>
+              <th className="p-3 border-r border-slate-600 w-[160px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Activity size={16} className="text-white" /><span>نوع الاستهلاك</span></div></th>
               {MONTHS.map((month) => (<th key={month.key} className="p-2 border-r border-slate-600 align-middle"><div className="flex items-center justify-center h-full w-full text-center">{month.label}</div></th>))}
               <th className="p-3 border-r border-slate-600 bg-[#091526] text-white w-[85px] align-middle"><div className="flex items-center justify-center h-full w-full text-center">المجموع</div></th>
-              <th className="p-3 border-r border-slate-600 bg-[#091526] text-white w-[50px] align-middle"><div className="flex items-center justify-center h-full w-full text-center">المرفقات</div></th>
+              <th className="p-3 border-r border-slate-600 bg-[#091526] text-white w-[40px] align-middle"><div className="flex items-center justify-center h-full w-full text-center"><FolderOpen size={16} /></div></th>
             </tr>
           </thead>
           <tbody>{renderRows(data, false, (idx, id, e) => handleDeleteSite(idx, e))}</tbody>
@@ -565,9 +565,9 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
       <div className="mt-4 overflow-x-auto border border-blue-900 rounded-lg shadow-lg bg-white print:shadow-none print:border-none">
         <table className="w-full text-sm text-center border-collapse min-w-[1200px] table-fixed">
           <colgroup>
-            <col className="w-[180px]" /><col className="w-[120px]" /><col className="w-[140px]" />
+            <col className="w-[180px]" /><col className="w-[120px]" /><col className="w-[160px]" />
             {MONTHS.map(m => <col key={m.key} />)}
-            <col className="w-[85px]" /><col className="w-[50px]" />
+            <col className="w-[85px]" /><col className="w-[40px]" />
           </colgroup>
           <tbody>
             <tr className="bg-blue-200 text-blue-900 font-bold text-sm">
@@ -595,10 +595,10 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
                   <tr className="bg-red-800 text-white font-bold border-b border-red-900">
                     <th className="p-3 border-r border-red-700 w-[180px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><MapPin size={16} className="text-white" /><span>الموقع</span></div></th>
                     <th className="p-3 border-r border-red-700 w-[120px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Hash size={16} className="text-white" /><span>رقم العداد</span></div></th>
-                    <th className="p-3 border-r border-red-700 w-[140px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Activity size={16} className="text-white" /><span>نوع الاستهلاك</span></div></th>
+                    <th className="p-3 border-r border-red-700 w-[160px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Activity size={16} className="text-white" /><span>نوع الاستهلاك</span></div></th>
                     {MONTHS.map((month) => (<th key={month.key} className="p-2 border-r border-red-700 align-middle">{month.label}</th>))}
                     <th className="p-3 border-r border-red-700 bg-red-950 text-white w-[85px] align-middle">المجموع</th>
-                    <th className="p-3 border-r border-red-700 bg-red-950 text-white w-[50px] align-middle">المرفقات</th>
+                    <th className="p-3 border-r border-red-700 bg-red-950 text-white w-[40px] align-middle"><div className="flex items-center justify-center w-full"><FolderOpen size={16} /></div></th>
                   </tr>
                 </thead>
                 <tbody>{renderRows(archivedData, true, (idx, id, e) => handleRestore(id, e))}</tbody>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Settings } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 
 interface HeaderProps {
   currentYear: number;
@@ -74,10 +74,6 @@ const Header: React.FC<HeaderProps> = ({ currentYear, onYearChange }) => {
                 <Calendar size={22} />
               </div>
             </div>
-            
-            <button className="p-3.5 text-blue-300 hover:text-white hover:bg-blue-800/50 rounded-full transition-all duration-200 bg-blue-900/20 border border-transparent hover:border-blue-700/50">
-              <Settings size={24} />
-            </button>
           </div>
         </div>
       </div>
