@@ -488,7 +488,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
       merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 2 } });
 
       ws['!merges'] = merges;
-      ws['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 25 }, ...MONTHS.map(() => ({ wch: 12 })), { wch: 18 }, { wch: 25 }];
+      ws['!cols'] = [{ wch: 30 }, { wch: 25 }, { wch: 25 }, ...MONTHS.map(() => ({ wch: 12 })), { wch: 18 }, { wch: 25 }];
 
       utils.book_append_sheet(wb, ws, `استهلاك ${year}`);
       writeFile(wb, `Saher_Consumption_${year}.xlsx`);
@@ -665,7 +665,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
           <thead>
             <tr className="bg-[#334155] text-white font-bold border-b border-slate-600">
               <th className="p-3 border-r border-slate-600 w-[180px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><MapPin size={16} className="text-white" /><span>الموقع</span></div></th>
-              <th className="p-3 border-r border-slate-600 w-[120px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Hash size={16} className="text-white" /><span>رقم العداد</span></div></th>
+              <th className="p-3 border-r border-slate-600 w-[135px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Hash size={16} className="text-white" /><span>رقم العداد</span></div></th>
               <th className="p-3 border-r border-slate-600 w-[160px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Activity size={16} className="text-white" /><span>نوع الاستهلاك</span></div></th>
               {MONTHS.map((month) => (<th key={month.key} className="p-2 border-r border-slate-600 align-middle"><div className="flex items-center justify-center h-full w-full text-center">{month.label}</div></th>))}
               <th className="p-3 border-r border-slate-600 bg-[#091526] text-white w-[85px] align-middle"><div className="flex items-center justify-center h-full w-full text-center">المجموع</div></th>
@@ -683,7 +683,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
       <div className="mt-4 overflow-x-auto border border-blue-900 rounded-lg shadow-lg bg-white print:shadow-none print:border-none">
         <table className="w-full text-sm text-center border-collapse min-w-[1200px] table-fixed">
           <colgroup>
-            <col className="w-[180px]" /><col className="w-[120px]" /><col className="w-[160px]" />
+            <col className="w-[180px]" /><col className="w-[135px]" /><col className="w-[160px]" />
             {MONTHS.map(m => <col key={m.key} />)}
             <col className="w-[85px]" /><col className="w-[40px]" />
           </colgroup>
@@ -712,7 +712,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
                 <thead>
                   <tr className="bg-red-800 text-white font-bold border-b border-red-900">
                     <th className="p-3 border-r border-red-700 w-[180px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><MapPin size={16} className="text-white" /><span>الموقع</span></div></th>
-                    <th className="p-3 border-r border-red-700 w-[120px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Hash size={16} className="text-white" /><span>رقم العداد</span></div></th>
+                    <th className="p-3 border-r border-red-700 w-[135px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Hash size={16} className="text-white" /><span>رقم العداد</span></div></th>
                     <th className="p-3 border-r border-red-700 w-[160px] align-middle"><div className="flex items-center justify-center h-full w-full text-center gap-2"><Activity size={16} className="text-white" /><span>نوع الاستهلاك</span></div></th>
                     {MONTHS.map((month) => (<th key={month.key} className="p-2 border-r border-red-700 align-middle">{month.label}</th>))}
                     <th className="p-3 border-r border-red-700 bg-red-950 text-white w-[85px] align-middle">المجموع</th>
