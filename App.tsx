@@ -201,6 +201,13 @@ function App() {
     handleDataChange([...currentSitesData, siteToRestore]);
   };
 
+  const handleDeletePermanently = (siteId: string) => {
+    setArchivesByYear(prev => ({
+      ...prev,
+      [currentYear]: prev[currentYear].filter(s => s.id !== siteId)
+    }));
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 font-sans">
       <Header currentYear={currentYear} onYearChange={setCurrentYear} />
@@ -216,6 +223,7 @@ function App() {
             onSiteMetadataUpdate={handleSiteMetadataUpdate}
             onArchiveSite={handleArchiveSite}
             onRestoreSite={handleRestoreSite}
+            onDeletePermanently={handleDeletePermanently}
             onSave={handleManualSave}
           />
         </div>

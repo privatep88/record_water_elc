@@ -53,6 +53,7 @@ interface ConsumptionTableProps {
   onSiteMetadataUpdate: (siteId: string, updates: Partial<SiteData>) => void;
   onArchiveSite: (siteId: string) => void;
   onRestoreSite: (siteId: string) => void;
+  onDeletePermanently: (siteId: string) => void;
   onSave: () => void;
 }
 
@@ -65,6 +66,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
   onSiteMetadataUpdate,
   onArchiveSite,
   onRestoreSite,
+  onDeletePermanently,
   onSave
 }) => {
 
@@ -242,6 +244,14 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
     e.stopPropagation();
     if (window.confirm('هل أنت متأكد من رغبتك في استعادة هذا الموقع؟')) {
       onRestoreSite(siteId);
+    }
+  };
+
+  const handlePermanentDeleteClick = (siteId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.confirm('تحذير: هل أنت متأكد من حذف هذا السجل نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')) {
+      onDeletePermanently(siteId);
     }
   };
 
@@ -467,9 +477,16 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
               {isFirstRow && (
                 <td rowSpan={site.rows.length} className={`${isArchive ? 'bg-red-50' : 'bg-blue-50/50'} font-bold border-r ${isArchive ? 'border-red-200' : 'border-blue-200'} p-2 align-middle text-base break-words relative group`}>
                    <div className="flex flex-col items-center justify-center h-full w-full relative">
-                       <button type="button" onClick={(e) => handleAction(siteIndex, site.id, e)} className={`p-1.5 mb-2 rounded-full shadow-sm border transition-all duration-200 print:hidden z-20 cursor-pointer ${isArchive ? 'text-green-600 bg-white border-green-200 hover:bg-green-50' : 'text-red-500 bg-white border-red-100 hover:bg-red-50 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0'}`} title={isArchive ? "استعادة الموقع" : "حذف الموقع"}>
-                         {isArchive ? <RotateCcw size={16} /> : <Trash2 size={16} />}
-                       </button>
+                       <div className="flex items-center justify-center gap-2 mb-2 z-20 print:hidden w-full">
+                           <button type="button" onClick={(e) => handleAction(siteIndex, site.id, e)} className={`p-1.5 rounded-full shadow-sm border transition-all duration-200 cursor-pointer ${isArchive ? 'text-green-600 bg-white border-green-200 hover:bg-green-50' : 'text-red-500 bg-white border-red-100 hover:bg-red-50 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0'}`} title={isArchive ? "استعادة الموقع" : "حذف الموقع"}>
+                             {isArchive ? <RotateCcw size={16} /> : <Trash2 size={16} />}
+                           </button>
+                           {isArchive && (
+                             <button type="button" onClick={(e) => handlePermanentDeleteClick(site.id, e)} className="p-1.5 rounded-full shadow-sm border transition-all duration-200 cursor-pointer text-red-600 bg-white border-red-200 hover:bg-red-100" title="حذف نهائي">
+                               <X size={16} />
+                             </button>
+                           )}
+                       </div>
                        <AutoResizeTextarea disabled={isArchive} value={site.name} onChange={(e) => handleSiteNameChange(siteIndex, e.target.value)} className={`w-full bg-transparent text-center border-none focus:ring-2 focus:ring-blue-500 focus:bg-white p-2 outline-none whitespace-normal break-words leading-tight rounded ${isArchive ? 'cursor-not-allowed text-red-900' : 'text-blue-900'}`} placeholder="اسم الموقع" style={{ margin: '0 auto', minHeight: '60px' }} />
                    </div>
                 </td>
