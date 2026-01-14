@@ -170,7 +170,9 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
         data: base64Data
       };
 
-      row.attachments = [...(row.attachments || []), newAttachment];
+      // Replace existing attachments with the new one (Single file policy)
+      row.attachments = [newAttachment];
+      
       site.rows[activeUploadRow.rowIndex] = row;
       newData[activeUploadRow.siteIndex] = site;
       
@@ -187,7 +189,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
     const site = { ...newData[siteIndex] };
     const row = { ...site.rows[rowIndex] };
     
-    row.attachments = row.attachments?.filter(a => a.id !== attachmentId) || [];
+    row.attachments = []; // Clear attachments
     site.rows[rowIndex] = row;
     newData[siteIndex] = site;
     onDataChange(newData);
@@ -197,14 +199,14 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
     const ext = fileName.split('.').pop()?.toLowerCase() || '';
     
     if (mimeType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(ext)) {
-      return <ImageIcon size={16} className="text-purple-600" strokeWidth={2.5} />;
+      return <ImageIcon size={18} className="text-purple-600" strokeWidth={2} />;
     }
-    if (ext === 'pdf') return <FileText size={16} className="text-red-600" strokeWidth={2.5} />;
-    if (['doc', 'docx'].includes(ext)) return <FileText size={16} className="text-blue-600" strokeWidth={2.5} />;
-    if (['xls', 'xlsx', 'csv'].includes(ext)) return <FileSpreadsheet size={16} className="text-emerald-600" strokeWidth={2.5} />;
-    if (['ppt', 'pptx'].includes(ext)) return <File size={16} className="text-orange-500" strokeWidth={2.5} />;
-    if (ext === 'txt') return <FileText size={16} className="text-gray-500" strokeWidth={2.5} />;
-    return <File size={16} className="text-slate-400" strokeWidth={2} />;
+    if (ext === 'pdf') return <FileText size={18} className="text-red-600" strokeWidth={2} />;
+    if (['doc', 'docx'].includes(ext)) return <FileText size={18} className="text-blue-600" strokeWidth={2} />;
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return <FileSpreadsheet size={18} className="text-emerald-600" strokeWidth={2} />;
+    if (['ppt', 'pptx'].includes(ext)) return <File size={18} className="text-orange-500" strokeWidth={2} />;
+    if (ext === 'txt') return <FileText size={18} className="text-gray-500" strokeWidth={2} />;
+    return <File size={18} className="text-slate-400" strokeWidth={2} />;
   };
 
   const handleAddSite = () => {
@@ -440,8 +442,6 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
 
   // Render Rows logic...
   const renderRows = (sites: SiteData[], isArchive: boolean, handleAction: (index: number, id: string, e: React.MouseEvent) => void) => {
-     // ... Reuse previous rendering logic, no changes needed inside renderRows mostly
-     // Just ensuring the Attachments button uses the new file limit handler
      return sites.map((site, siteIndex) => (
       <React.Fragment key={site.id}>
         {siteIndex > 0 && (
@@ -472,6 +472,8 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
           const isFirstRow = rowIndex === 0;
           const isTotalRow = row.type === RowType.CALCULATED_TOTAL;
           const rowTotal = calculateHorizontalTotal(row.values);
+          const hasAttachment = row.attachments && row.attachments.length > 0;
+
           return (
             <tr key={row.id} className={`hover:bg-blue-50 transition-colors ${isTotalRow ? (isArchive ? 'bg-red-100 text-red-900 border-t border-red-200' : 'bg-blue-100 font-bold text-blue-900 border-t border-blue-300') : 'text-slate-700'} ${rowIndex === site.rows.length - 1 ? (isArchive ? 'border-b-4 border-red-800' : 'border-b-4 border-blue-900') : 'border-b border-gray-200'} ${isArchive && !isTotalRow ? 'bg-red-50/50 text-red-800' : ''}`}>
               {isFirstRow && (
@@ -517,18 +519,33 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
                 <div className="flex items-center justify-center w-full h-full">{formatNumber(rowTotal)}</div>
               </td>
               <td className={`border-r ${isArchive ? 'border-red-200' : 'border-blue-200'} align-middle px-1 w-[40px]`}>
-                <div className="flex flex-col items-center justify-center w-full h-full gap-1 p-1">
-                  {row.attachments && row.attachments.length > 0 && (
-                     <div className="flex flex-wrap gap-1 justify-center mb-1 max-w-[100px]">
-                       {row.attachments.map((att) => (
-                         <div key={att.id} className="relative group cursor-pointer" title={att.name}>
-                            <a href={att.data} download={att.name} className="block p-1 bg-white rounded border border-gray-200 hover:border-blue-400 shadow-sm transition-all">{getFileIcon(att.name, att.type)}</a>
-                            {!isArchive && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteAttachment(siteIndex, rowIndex, att.id); }} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-[1px] opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>}
-                         </div>
-                       ))}
+                <div className="flex items-center justify-center w-full h-full p-1 min-h-[40px]">
+                  {hasAttachment ? (
+                     <div className="relative group flex items-center justify-center" title={row.attachments![0].name}>
+                        <a href={row.attachments![0].data} download={row.attachments![0].name} className="block p-1.5 bg-white rounded border border-gray-200 hover:border-blue-400 shadow-sm transition-all">
+                          {getFileIcon(row.attachments![0].name, row.attachments![0].type)}
+                        </a>
+                        {!isArchive && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteAttachment(siteIndex, rowIndex, row.attachments![0].id);
+                            }}
+                            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-[2px] shadow-sm hover:bg-red-600 transition-colors z-10 opacity-0 group-hover:opacity-100"
+                            title="حذف المرفق"
+                          >
+                            <X size={10} />
+                          </button>
+                        )}
                      </div>
+                  ) : (
+                    !isArchive && (
+                      <button onClick={() => triggerFileUpload(siteIndex, rowIndex)} className="text-gray-400 hover:text-blue-600 transition-colors p-1 flex items-center justify-center" title="إرفاق ملف">
+                        <Paperclip size={18} />
+                      </button>
+                    )
                   )}
-                  {!isArchive && <button onClick={() => triggerFileUpload(siteIndex, rowIndex)} className="text-gray-400 hover:text-blue-600 transition-colors p-1" title="إرفاق ملف"><Paperclip size={16} /></button>}
                 </div>
               </td>
             </tr>
