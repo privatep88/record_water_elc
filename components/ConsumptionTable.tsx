@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { SiteData, MONTHS, MonthKey, RowType, ConsumptionRow, Attachment } from '../types.ts';
-import { Save, Printer, Plus, Trash2, Archive, RotateCcw, Upload, Download, MapPin, Hash, Activity, Check, Paperclip, FileText, Image as ImageIcon, FileSpreadsheet, X, File, Eye, FolderOpen } from 'lucide-react';
+import { Save, Printer, Plus, Trash2, Archive, RotateCcw, Upload, Download, MapPin, Hash, Activity, Check, Paperclip, FileText, Image as ImageIcon, FileSpreadsheet, X, File, Eye, FolderOpen, PlusCircle, MinusCircle } from 'lucide-react';
 import { read, utils, writeFile } from 'xlsx';
 
 // Helper to prevent floating point errors
@@ -84,6 +84,30 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
     }
   }, [showArchive]);
 
+  const calculateSiteTotals = (siteRows: ConsumptionRow[]): ConsumptionRow[] => {
+    const newRows = [...siteRows];
+    const totalRowIndex = newRows.findIndex(r => r.type === RowType.CALCULATED_TOTAL);
+    
+    if (totalRowIndex !== -1) {
+      const totalRow = { ...newRows[totalRowIndex] };
+      const newTotalValues = { ...totalRow.values };
+
+      MONTHS.forEach(month => {
+        let monthTotalCost = 0;
+        newRows.forEach(r => {
+          if (r.type === RowType.INPUT && r.isCost) {
+            monthTotalCost = safeFloat(monthTotalCost + r.values[month.key]);
+          }
+        });
+        newTotalValues[month.key] = monthTotalCost;
+      });
+      
+      totalRow.values = newTotalValues;
+      newRows[totalRowIndex] = totalRow;
+    }
+    return newRows;
+  };
+
   const handleInputChange = useCallback((siteIndex: number, rowIndex: number, month: MonthKey, value: string) => {
     const numValue = value === '' ? 0 : parseFloat(value);
     
@@ -93,26 +117,10 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
     
     row.values = { ...row.values, [month]: numValue };
     site.rows[rowIndex] = row;
-    newData[siteIndex] = site;
 
     // Recalculate totals
-    const totalRowIndex = site.rows.findIndex(r => r.type === RowType.CALCULATED_TOTAL);
-    if (totalRowIndex !== -1) {
-      const totalRow = { ...site.rows[totalRowIndex] };
-      const newTotalValues = { ...totalRow.values };
-
-      let monthTotalCost = 0;
-      site.rows.forEach(r => {
-        if (r.type === RowType.INPUT && r.isCost) {
-          monthTotalCost = safeFloat(monthTotalCost + r.values[month]);
-        }
-      });
-      
-      newTotalValues[month] = monthTotalCost;
-      totalRow.values = newTotalValues;
-      site.rows[totalRowIndex] = totalRow;
-      newData[siteIndex] = site;
-    }
+    site.rows = calculateSiteTotals(site.rows);
+    newData[siteIndex] = site;
 
     onDataChange(newData);
   }, [data, onDataChange]);
@@ -131,6 +139,62 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
     const rows = [...site.rows];
     rows[rowIndex] = { ...rows[rowIndex], label: value };
     site.rows = rows;
+    newData[siteIndex] = site;
+    onDataChange(newData);
+  };
+
+  // --- Row Management (Add/Delete) ---
+
+  const handleAddRow = (siteIndex: number, insertAfterIndex?: number) => {
+    const newData = [...data];
+    const site = { ...newData[siteIndex] };
+    const timestamp = Date.now();
+
+    const createEmptyMonthValues = () => {
+      const v: Record<string, number> = {};
+      MONTHS.forEach(m => v[m.key] = 0);
+      return v as Record<MonthKey, number>;
+    };
+
+    const newRow: ConsumptionRow = {
+      id: `s_${site.id}_r_${timestamp}`,
+      label: 'بند جديد',
+      type: RowType.INPUT,
+      isCost: false, // Changed to false to match 'Water (cubic meters)' behavior (no cost contribution)
+      values: createEmptyMonthValues(),
+      attachments: [],
+      unit: ''
+    };
+
+    if (typeof insertAfterIndex === 'number') {
+      // Insert immediately after the row where the button was clicked
+      site.rows.splice(insertAfterIndex + 1, 0, newRow);
+    } else {
+      // Fallback: Find the index of the total row to insert before it
+      const totalRowIndex = site.rows.findIndex(r => r.type === RowType.CALCULATED_TOTAL);
+      if (totalRowIndex !== -1) {
+        site.rows.splice(totalRowIndex, 0, newRow);
+      } else {
+        site.rows.push(newRow);
+      }
+    }
+
+    newData[siteIndex] = site;
+    onDataChange(newData);
+  };
+
+  const handleDeleteRow = (siteIndex: number, rowIndex: number) => {
+    if (!window.confirm("هل أنت متأكد من حذف هذا البند؟")) return;
+
+    const newData = [...data];
+    const site = { ...newData[siteIndex] };
+    
+    // Remove the row
+    site.rows.splice(rowIndex, 1);
+    
+    // Recalculate totals after deletion
+    site.rows = calculateSiteTotals(site.rows);
+
     newData[siteIndex] = site;
     onDataChange(newData);
   };
@@ -500,10 +564,30 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
                    </div>
                 </td>
               )}
-              <td className={`p-1 border-r ${isArchive ? 'border-red-200' : 'border-blue-200'} relative align-middle ${row.isCost && !isArchive ? 'text-blue-800 font-semibold' : ''} ${isArchive && row.isCost ? 'text-red-800 font-bold' : ''}`}>
-                 <div className="flex flex-col items-center justify-center w-full h-full min-h-[40px]">
-                   {row.unit && <span className={`text-[10px] whitespace-nowrap mb-1 px-1 rounded ${isArchive ? 'bg-red-100 text-red-600' : 'bg-blue-50/50 text-blue-400'}`}>{row.unit}</span>}
-                   <AutoResizeTextarea disabled={isArchive} value={row.label} onChange={(e) => handleRowLabelChange(siteIndex, rowIndex, e.target.value)} className={`w-full bg-transparent border-none focus:ring-1 focus:ring-blue-500 focus:bg-blue-50 outline-none text-center leading-tight whitespace-normal break-words ${row.isCost ? 'font-bold' : ''} ${isArchive ? 'cursor-not-allowed' : ''}`} style={{ margin: 'auto' }} />
+              <td className={`p-1 border-r ${isArchive ? 'border-red-200' : 'border-blue-200'} relative align-middle ${row.isCost && !isArchive ? 'text-blue-800 font-semibold' : ''} ${isArchive && row.isCost ? 'text-red-800 font-bold' : ''} group`}>
+                 <div className="flex items-center justify-center w-full h-full min-h-[40px] relative">
+                   <div className="flex flex-col items-center justify-center w-full">
+                    {row.unit && <span className={`text-[10px] whitespace-nowrap mb-1 px-1 rounded ${isArchive ? 'bg-red-100 text-red-600' : 'bg-blue-50/50 text-blue-400'}`}>{row.unit}</span>}
+                    <AutoResizeTextarea disabled={isArchive} value={row.label} onChange={(e) => handleRowLabelChange(siteIndex, rowIndex, e.target.value)} className={`w-full bg-transparent border-none focus:ring-1 focus:ring-blue-500 focus:bg-blue-50 outline-none text-center leading-tight whitespace-normal break-words ${row.isCost ? 'font-bold' : ''} ${isArchive ? 'cursor-not-allowed' : ''}`} style={{ margin: 'auto' }} />
+                   </div>
+                   {!isArchive && !isTotalRow && (
+                     <>
+                        <button 
+                          onClick={() => handleAddRow(siteIndex, rowIndex)} 
+                          className="absolute right-1 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
+                          title="إضافة بند"
+                        >
+                          <PlusCircle size={14} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteRow(siteIndex, rowIndex)} 
+                          className="absolute left-1 top-1/2 -translate-y-1/2 text-red-300 hover:text-red-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
+                          title="حذف البند"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                     </>
+                   )}
                  </div>
               </td>
               {MONTHS.map((month) => (
