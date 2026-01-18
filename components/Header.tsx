@@ -13,7 +13,7 @@ const Header: React.FC<HeaderProps> = ({ currentYear, onYearChange }) => {
   const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 
   return (
-    <header className="bg-[#091526] border-b border-blue-900 shadow-xl sticky top-0 z-50 h-28 print:hidden transition-all duration-300">
+    <header className="bg-[#091526] border-b-4 border-[#eab308] shadow-xl sticky top-0 z-50 h-28 print:hidden transition-all duration-300">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 h-full relative">
         <div className="flex justify-between items-center h-full">
           

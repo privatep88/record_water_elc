@@ -3,7 +3,7 @@ import { MapPin, Phone, Mail, ChevronLeft } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-[#091526] text-blue-50 py-6 mt-auto border-t-4 border-blue-600">
+    <footer className="bg-[#091526] text-blue-50 py-6 mt-auto border-t-4 border-[#eab308]">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hide detailed info in print, keep only copyright and designer */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 print:hidden">
