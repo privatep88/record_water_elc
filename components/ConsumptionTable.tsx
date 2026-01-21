@@ -649,11 +649,15 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
            <button onClick={handleImportClick} className="bg-blue-800 hover:bg-blue-700 text-blue-100 p-2 rounded transition-all border border-blue-700 flex items-center gap-1" title="استيراد من Excel"><Upload size={18} /><span className="hidden md:inline text-xs">استيراد</span></button>
            <button onClick={handleExportClick} className="bg-blue-800 hover:bg-blue-700 text-blue-100 p-2 rounded transition-all border border-blue-700 flex items-center gap-1" title="تصدير الى Excel"><Download size={18} /><span className="hidden md:inline text-xs">تصدير</span></button>
            <button onClick={() => window.print()} className="bg-blue-800 hover:bg-blue-700 text-blue-100 p-2 rounded transition-all border border-blue-700" title="طباعة"><Printer size={18} /></button>
-           <button onClick={handleSaveClick} className="bg-blue-800 hover:bg-blue-700 text-blue-100 p-2 rounded transition-all border border-blue-700 flex items-center justify-center min-w-[36px]" title="حفظ">{saveStatus === 'saved' ? <Check size={18} className="text-green-400" /> : <Save size={18} />}</button>
         </div>
       </div>
 
-      <div className="flex justify-start px-1 print:hidden">
+      <div className="flex justify-start px-1 print:hidden gap-3 items-center">
+        <button onClick={handleSaveClick} className="flex items-center gap-2 bg-[#091526] hover:bg-blue-800 text-white px-4 py-2 rounded shadow transition-all text-sm font-bold border border-blue-900/50 group">
+          {saveStatus === 'saved' ? <Check size={16} className="text-green-400" /> : <Save size={16} className="text-yellow-500 group-hover:text-white transition-colors" />}
+          <span>حفظ التغييرات</span>
+        </button>
+
         <button onClick={() => setShowArchive(!showArchive)} className="flex items-center gap-2 bg-[#091526] hover:bg-blue-800 text-white px-4 py-2 rounded shadow transition-all text-sm font-bold border border-blue-900/50">
           <Archive size={16} />سجل الأرشيف
           {archivedData.length > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full mr-1">{archivedData.length}</span>}

@@ -80,7 +80,7 @@ function App() {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       setAutoSaveStatus('saving');
       
-      // Debounce the save operation: wait 500ms after the last change before saving.
+      // Debounce the save operation: wait 1000ms after the last change before saving.
       saveTimeoutRef.current = window.setTimeout(() => {
           saveData(STORAGE_KEYS.DATA, dataByYear);
           saveData(STORAGE_KEYS.TEMPLATE, templateSites);
@@ -91,7 +91,7 @@ function App() {
           saveTimeoutRef.current = window.setTimeout(() => {
               setAutoSaveStatus('idle');
           }, 1500);
-      }, 500);
+      }, 1000);
     } else {
       // On first render, just mark the component as mounted.
       isMounted.current = true;
@@ -110,9 +110,21 @@ function App() {
 
   // Manual Save Handler
   const handleManualSave = useCallback(() => {
+    // If an auto-save is pending, clear it and save immediately
+    if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+    }
+
     saveData(STORAGE_KEYS.DATA, dataByYear);
     saveData(STORAGE_KEYS.TEMPLATE, templateSites);
     saveData(STORAGE_KEYS.ARCHIVES, archivesByYear);
+    
+    // Also trigger the "Saved" status in the header for feedback
+    setAutoSaveStatus('saved');
+    saveTimeoutRef.current = window.setTimeout(() => {
+        setAutoSaveStatus('idle');
+    }, 1500);
+
   }, [dataByYear, templateSites, archivesByYear, saveData]);
 
   // Get the data for the currently selected year.
