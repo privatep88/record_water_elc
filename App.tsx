@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header.tsx';
 import Footer from './components/Footer.tsx';
 import ConsumptionTable from './components/ConsumptionTable.tsx';
@@ -20,6 +20,9 @@ const getInitialData = (): SiteData[] => {
 function App() {
   // Set default year to 2026 as requested
   const [currentYear, setCurrentYear] = useState(2026);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const saveTimeoutRef = useRef<number | null>(null);
+  const isMounted = useRef(false);
   
   // Update document title when year changes
   useEffect(() => {
@@ -71,10 +74,39 @@ function App() {
 
   // Auto-save Effect
   useEffect(() => {
-    saveData(STORAGE_KEYS.DATA, dataByYear);
-    saveData(STORAGE_KEYS.TEMPLATE, templateSites);
-    saveData(STORAGE_KEYS.ARCHIVES, archivesByYear);
+    // This effect runs automatically whenever data changes.
+    // We check `isMounted.current` to prevent it from running on the initial page load.
+    if (isMounted.current) {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      setAutoSaveStatus('saving');
+      
+      // Debounce the save operation: wait 500ms after the last change before saving.
+      saveTimeoutRef.current = window.setTimeout(() => {
+          saveData(STORAGE_KEYS.DATA, dataByYear);
+          saveData(STORAGE_KEYS.TEMPLATE, templateSites);
+          saveData(STORAGE_KEYS.ARCHIVES, archivesByYear);
+          setAutoSaveStatus('saved');
+  
+          // Show "saved" message for 1.5 seconds, then return to idle.
+          saveTimeoutRef.current = window.setTimeout(() => {
+              setAutoSaveStatus('idle');
+          }, 1500);
+      }, 500);
+    } else {
+      // On first render, just mark the component as mounted.
+      isMounted.current = true;
+      // Also perform an initial save without showing status, in case data was loaded but needs syncing.
+      saveData(STORAGE_KEYS.DATA, dataByYear);
+      saveData(STORAGE_KEYS.TEMPLATE, templateSites);
+      saveData(STORAGE_KEYS.ARCHIVES, archivesByYear);
+    }
+
+    // Cleanup timeout on component unmount or before the next effect runs.
+    return () => {
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    }
   }, [dataByYear, templateSites, archivesByYear, saveData]);
+
 
   // Manual Save Handler
   const handleManualSave = useCallback(() => {
@@ -210,7 +242,7 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 font-sans">
-      <Header currentYear={currentYear} onYearChange={setCurrentYear} />
+      <Header currentYear={currentYear} onYearChange={setCurrentYear} autoSaveStatus={autoSaveStatus} />
       
       <main className="flex-grow w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1 md:p-6 min-h-[500px]">

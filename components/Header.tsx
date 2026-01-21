@@ -1,12 +1,13 @@
 import React from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, LoaderCircle, CheckCircle } from 'lucide-react';
 
 interface HeaderProps {
   currentYear: number;
   onYearChange: (year: number) => void;
+  autoSaveStatus: 'idle' | 'saving' | 'saved';
 }
 
-const Header: React.FC<HeaderProps> = ({ currentYear, onYearChange }) => {
+const Header: React.FC<HeaderProps> = ({ currentYear, onYearChange, autoSaveStatus }) => {
   // Generate years from 2026 to 2099
   const startYear = 2026;
   const endYear = 2099;
@@ -58,7 +59,25 @@ const Header: React.FC<HeaderProps> = ({ currentYear, onYearChange }) => {
           </div>
 
           {/* Controls - Left (RTL End) */}
-          <div className="flex items-center gap-6 z-20 relative shrink-0">
+          <div className="flex items-center gap-4 z-20 relative shrink-0">
+            {/* Auto Save Status Indicator */}
+            <div className="relative h-10 w-40 hidden lg:block">
+              <div className={`absolute inset-0 flex items-center justify-center bg-blue-950/50 rounded-xl p-2 border border-blue-800/50 shadow-inner text-xs transition-opacity duration-300 ${autoSaveStatus !== 'idle' ? 'opacity-100' : 'opacity-0'}`}>
+                   {autoSaveStatus === 'saving' && (
+                     <>
+                       <LoaderCircle size={16} className="animate-spin text-blue-300 mr-2" />
+                       <span className="text-blue-300">جاري الحفظ...</span>
+                     </>
+                   )}
+                   {autoSaveStatus === 'saved' && (
+                     <>
+                       <CheckCircle size={16} className="text-green-400 mr-2" />
+                       <span className="text-green-400">تم الحفظ تلقائياً</span>
+                     </>
+                   )}
+              </div>
+            </div>
+
             <div className="flex items-center bg-blue-950/50 rounded-xl p-2 border border-blue-800/50 shadow-inner group hover:border-blue-600 transition-colors">
               <span className="px-2 text-blue-300 text-sm font-medium hidden lg:inline ml-1">السنة المالية:</span>
               <select 
