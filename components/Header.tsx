@@ -8,8 +8,8 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ currentYear, onYearChange, autoSaveStatus }) => {
-  // Generate years from 2026 to 2099
-  const startYear = 2026;
+  // Generate years from current year to 2099
+  const startYear = new Date().getFullYear();
   const endYear = 2099;
   const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 

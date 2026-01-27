@@ -18,8 +18,8 @@ const getInitialData = (): SiteData[] => {
 };
 
 function App() {
-  // Set default year to 2026 as requested
-  const [currentYear, setCurrentYear] = useState(2026);
+  // Set default year to current year dynamically
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
   const isMounted = useRef(false);
