@@ -92,9 +92,11 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
     year: number;
   } | null>(null);
 
-  // Available selectable years
+  // Available selectable years - expanded from 2015 to 2099
   const availableYears = useMemo(() => {
-    const list = [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
+    const startYear = 2015;
+    const endYear = 2099;
+    const list = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
     return Array.from(new Set([...list, baseYear, currentYear])).sort((a, b) => a - b);
   }, [baseYear, currentYear]);
 
@@ -291,6 +293,28 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
       setBaseYear(2025);
       setCurrentYear(2026);
       addAuditLog('إعادة ضبط المصنع', 'تم استرجاع المقرات والبيانات الافتراضية للنظام');
+    }
+  };
+
+  // Zero out all numbers in the table
+  const handleResetToZero = () => {
+    if (
+      window.confirm(
+        'هل أنت متأكد من تصفير كافة أرقام وأعداد استهلاك الماء والكهرباء في جدول فرق الاستهلاك السنوي؟'
+      )
+    ) {
+      setRecords((prev) => {
+        const next: Record<string, Record<number, AnnualConsumptionRecord>> = {};
+        sites.forEach((site) => {
+          next[site.id] = {
+            ...(prev[site.id] || {}),
+            [baseYear]: { water: 0, electricity: 0, updatedAt: new Date().toISOString() },
+            [currentYear]: { water: 0, electricity: 0, updatedAt: new Date().toISOString() },
+          };
+        });
+        return next;
+      });
+      addAuditLog('تصفير الأرقام', `تم تصفير أرقام استهلاك الماء والكهرباء لسنتي ${baseYear} و ${currentYear}`);
     }
   };
 
@@ -495,6 +519,17 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
             <Plus size={15} className="text-blue-600" />
             <span>إضافة مقر جديد</span>
           </button>
+
+          {/* Zero out Numbers Button */}
+          <button
+            type="button"
+            onClick={handleResetToZero}
+            className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm border border-slate-300 transition cursor-pointer"
+            title="تصفير أرقام وأعداد الاستهلاك في الجدول"
+          >
+            <RotateCcw size={15} className="text-amber-600" />
+            <span>تصفير الأرقام</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-3 text-xs text-slate-500">
@@ -519,16 +554,7 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
         </div>
       </div>
 
-      {/* KPIs & Analytics Dashboard */}
-      <AnnualKPIs
-        baseYear={baseYear}
-        currentYear={currentYear}
-        sites={sites}
-        records={records}
-        totals={totals}
-      />
-
-      {/* Main Table: "فرق الاستهلاك السنوي" */}
+      {/* Main Table: "فرق الاستهلاك السنوي" - Directly under Save and Add buttons */}
       <AnnualTable
         baseYear={baseYear}
         currentYear={currentYear}
@@ -538,6 +564,29 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
         onOpenMonthlyModal={handleOpenMonthlyModal}
         totals={totals}
       />
+
+      {/* KPIs & Analytics Dashboard - Positioned below the table with all features preserved */}
+      <div className="pt-4 border-t border-slate-200 print:hidden space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <Sparkles size={16} className="text-yellow-500" />
+            <h3 className="text-sm font-bold text-slate-800">
+              لوحة المؤشرات التحليلية والإحصائيات
+            </h3>
+          </div>
+          <span className="text-xs text-slate-500">
+            تحليل استهلاك الطاقة ومعدلات التغير لسنتي {baseYear} و {currentYear}
+          </span>
+        </div>
+
+        <AnnualKPIs
+          baseYear={baseYear}
+          currentYear={currentYear}
+          sites={sites}
+          records={records}
+          totals={totals}
+        />
+      </div>
 
       {/* Modals */}
       <SiteManagementModal

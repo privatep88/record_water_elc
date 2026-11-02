@@ -682,19 +682,6 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
           <Archive size={16} />سجل الأرشيف
           {archivedData.length > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full mr-1">{archivedData.length}</span>}
         </button>
-
-        {onOpenAnnualComparison && (
-          <button 
-            type="button"
-            onClick={onOpenAnnualComparison} 
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-600 hover:to-indigo-600 text-white px-4 py-2 rounded shadow transition-all text-sm font-bold border border-blue-500/50 cursor-pointer group"
-            title="الانتقال إلى نظام فرق الاستهلاك السنوي وإدارة المقرات"
-          >
-            <BarChart3 size={16} className="text-yellow-400 group-hover:scale-110 transition-transform" />
-            <span>فرق الاستهلاك السنوي</span>
-            <span className="bg-yellow-400 text-slate-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold">جديد</span>
-          </button>
-        )}
       </div>
 
       <div className="overflow-x-auto border border-blue-900 rounded-b-lg shadow-lg bg-white print:shadow-none print:border-none">

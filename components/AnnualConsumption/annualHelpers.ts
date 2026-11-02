@@ -2,7 +2,7 @@ import { MonthKey, MONTHS, AnnualSite, AnnualConsumptionRecord, AuditLogEntry } 
 
 export const ANNUAL_STORAGE_KEYS = {
   SITES: 'saher_annual_sites_directory_v1',
-  RECORDS: 'saher_annual_consumption_records_v1',
+  RECORDS: 'saher_annual_consumption_records_v2',
   YEARS: 'saher_annual_configured_years_v1',
   AUDIT: 'saher_annual_audit_log_v1',
   SELECTED_BASE_YEAR: 'saher_annual_base_year_v1',
@@ -45,44 +45,44 @@ export const DEFAULT_ANNUAL_SITES: AnnualSite[] = [
 export const DEFAULT_CONSUMPTION_RECORDS: Record<string, Record<number, AnnualConsumptionRecord>> = {
   'site_saed_villa': {
     2025: {
-      water: 1000,
-      electricity: 20000,
-      notes: 'استهلاك اعتيادي لسنة 2025',
-      updatedAt: '2025-12-31T12:00:00.000Z'
+      water: 0,
+      electricity: 0,
+      notes: '',
+      updatedAt: '2025-01-01T00:00:00.000Z'
     },
     2026: {
-      water: 850,
-      electricity: 23000,
-      notes: 'انخفاض في استهلاك المياه بنسبة 15%',
-      updatedAt: '2026-06-30T12:00:00.000Z'
+      water: 0,
+      electricity: 0,
+      notes: '',
+      updatedAt: '2026-01-01T00:00:00.000Z'
     }
   },
   'site_saed_battuta': {
     2025: {
-      water: 1450,
-      electricity: 34200,
-      notes: 'سنة الأساس',
-      updatedAt: '2025-12-31T12:00:00.000Z'
+      water: 0,
+      electricity: 0,
+      notes: '',
+      updatedAt: '2025-01-01T00:00:00.000Z'
     },
     2026: {
-      water: 1320,
-      electricity: 31800,
-      notes: 'تحسن في كفاءة التبريد والإنارة',
-      updatedAt: '2026-06-30T12:00:00.000Z'
+      water: 0,
+      electricity: 0,
+      notes: '',
+      updatedAt: '2026-01-01T00:00:00.000Z'
     }
   },
   'site_saed_ajman': {
     2025: {
-      water: 920,
-      electricity: 18500,
-      notes: 'سنة الأساس',
-      updatedAt: '2025-12-31T12:00:00.000Z'
+      water: 0,
+      electricity: 0,
+      notes: '',
+      updatedAt: '2025-01-01T00:00:00.000Z'
     },
     2026: {
-      water: 980,
-      electricity: 17900,
-      notes: 'زيادة طفيفة في المياه مع خفض استهلاك الكهرباء',
-      updatedAt: '2026-06-30T12:00:00.000Z'
+      water: 0,
+      electricity: 0,
+      notes: '',
+      updatedAt: '2026-01-01T00:00:00.000Z'
     }
   }
 };

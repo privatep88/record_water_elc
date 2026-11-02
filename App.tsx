@@ -20,8 +20,8 @@ const getInitialData = (): SiteData[] => {
 };
 
 function App() {
-  // Navigation View Tab: 'annual_diff' or 'monthly'
-  const [activeView, setActiveView] = useState<'annual_diff' | 'monthly'>('annual_diff');
+  // Navigation View Tab: 'monthly' or 'annual_diff' (Default: جدول الاستهلاك الشهري)
+  const [activeView, setActiveView] = useState<'annual_diff' | 'monthly'>('monthly');
 
   // Set default year to current year dynamically
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
