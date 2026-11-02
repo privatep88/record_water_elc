@@ -2,8 +2,10 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import Header from './components/Header.tsx';
 import Footer from './components/Footer.tsx';
 import ConsumptionTable from './components/ConsumptionTable.tsx';
+import { AnnualConsumptionSystem } from './components/AnnualConsumption/AnnualConsumptionSystem.tsx';
 import { INITIAL_SITES } from './constants.ts';
 import { SiteData } from './types.ts';
+import { BarChart3, TableProperties, Sparkles } from 'lucide-react';
 
 // Storage Keys
 const STORAGE_KEYS = {
@@ -18,6 +20,9 @@ const getInitialData = (): SiteData[] => {
 };
 
 function App() {
+  // Navigation View Tab: 'annual_diff' or 'monthly'
+  const [activeView, setActiveView] = useState<'annual_diff' | 'monthly'>('annual_diff');
+
   // Set default year to current year dynamically
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -260,20 +265,65 @@ function App() {
     <div className="flex flex-col min-h-screen bg-gray-50 font-sans">
       <Header currentYear={currentYear} onYearChange={setCurrentYear} autoSaveStatus={autoSaveStatus} />
       
-      <main className="flex-grow w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1 md:p-6 min-h-[500px]">
-          <ConsumptionTable 
-            year={currentYear} 
-            data={currentSitesData}
-            archivedData={currentArchivedData}
-            onDataChange={handleDataChange}
-            onAddSite={handleGlobalAddSite}
-            onSiteMetadataUpdate={handleSiteMetadataUpdate}
-            onArchiveSite={handleArchiveSite}
-            onRestoreSite={handleRestoreSite}
-            onDeletePermanently={handleDeletePermanently}
-            onSave={handleManualSave}
-          />
+      <main className="flex-grow w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Main Navigation Tabs */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-5 print:hidden">
+          <button
+            type="button"
+            onClick={() => setActiveView('monthly')}
+            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm cursor-pointer ${
+              activeView === 'monthly'
+                ? 'bg-[#091526] text-white border-b-4 border-yellow-500 shadow-md ring-2 ring-blue-900/30'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <TableProperties size={18} className={activeView === 'monthly' ? 'text-yellow-400' : 'text-slate-500'} />
+            <span>جدول الاستهلاك الشهري (ساهر)</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold font-mono bg-blue-100 text-blue-800">
+              {currentYear}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveView('annual_diff')}
+            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm cursor-pointer ${
+              activeView === 'annual_diff'
+                ? 'bg-[#091526] text-white border-b-4 border-yellow-500 shadow-md ring-2 ring-blue-900/30'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <BarChart3 size={18} className={activeView === 'annual_diff' ? 'text-yellow-400' : 'text-slate-500'} />
+            <span>فرق الاستهلاك السنوي</span>
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                activeView === 'annual_diff' ? 'bg-yellow-400 text-slate-900' : 'bg-slate-200 text-slate-700'
+              }`}
+            >
+              الجدول الرئيسي
+            </span>
+          </button>
+        </div>
+
+        {/* Card Container */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 md:p-6 min-h-[500px]">
+          {activeView === 'annual_diff' ? (
+            <AnnualConsumptionSystem onBackToMonthly={() => setActiveView('monthly')} />
+          ) : (
+            <ConsumptionTable 
+              year={currentYear} 
+              data={currentSitesData}
+              archivedData={currentArchivedData}
+              onDataChange={handleDataChange}
+              onAddSite={handleGlobalAddSite}
+              onSiteMetadataUpdate={handleSiteMetadataUpdate}
+              onArchiveSite={handleArchiveSite}
+              onRestoreSite={handleRestoreSite}
+              onDeletePermanently={handleDeletePermanently}
+              onSave={handleManualSave}
+              onOpenAnnualComparison={() => setActiveView('annual_diff')}
+            />
+          )}
         </div>
       </main>
       

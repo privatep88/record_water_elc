@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { SiteData, MONTHS, MonthKey, RowType, ConsumptionRow, Attachment } from '../types.ts';
-import { Save, Printer, Plus, Trash2, Archive, RotateCcw, Upload, Download, MapPin, Hash, Activity, Check, Paperclip, FileText, Image as ImageIcon, FileSpreadsheet, X, File, Eye, FolderOpen, PlusCircle, MinusCircle } from 'lucide-react';
+import { Save, Printer, Plus, Trash2, Archive, RotateCcw, Upload, Download, MapPin, Hash, Activity, Check, Paperclip, FileText, Image as ImageIcon, FileSpreadsheet, X, File, Eye, FolderOpen, PlusCircle, MinusCircle, BarChart3 } from 'lucide-react';
 import { read, utils, writeFile } from 'xlsx';
 
 // Helper to prevent floating point errors
@@ -73,6 +73,7 @@ interface ConsumptionTableProps {
   onRestoreSite: (siteId: string) => void;
   onDeletePermanently: (siteId: string) => void;
   onSave: () => void;
+  onOpenAnnualComparison?: () => void;
 }
 
 const ConsumptionTable: React.FC<ConsumptionTableProps> = ({ 
@@ -85,7 +86,8 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
   onArchiveSite,
   onRestoreSite,
   onDeletePermanently,
-  onSave
+  onSave,
+  onOpenAnnualComparison
 }) => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -676,10 +678,23 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
           <span>حفظ التغييرات</span>
         </button>
 
-        <button onClick={() => setShowArchive(!showArchive)} className="flex items-center gap-2 bg-[#091526] hover:bg-blue-800 text-white px-4 py-2 rounded shadow transition-all text-sm font-bold border border-blue-900/50">
+        <button onClick={() => setShowArchive(!showArchive)} className="flex items-center gap-2 bg-[#091526] hover:bg-blue-800 text-white px-4 py-2 rounded shadow transition-all text-sm font-bold border border-blue-900/50 cursor-pointer">
           <Archive size={16} />سجل الأرشيف
           {archivedData.length > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full mr-1">{archivedData.length}</span>}
         </button>
+
+        {onOpenAnnualComparison && (
+          <button 
+            type="button"
+            onClick={onOpenAnnualComparison} 
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-600 hover:to-indigo-600 text-white px-4 py-2 rounded shadow transition-all text-sm font-bold border border-blue-500/50 cursor-pointer group"
+            title="الانتقال إلى نظام فرق الاستهلاك السنوي وإدارة المقرات"
+          >
+            <BarChart3 size={16} className="text-yellow-400 group-hover:scale-110 transition-transform" />
+            <span>فرق الاستهلاك السنوي</span>
+            <span className="bg-yellow-400 text-slate-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold">جديد</span>
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto border border-blue-900 rounded-b-lg shadow-lg bg-white print:shadow-none print:border-none">

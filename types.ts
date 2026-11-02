@@ -50,3 +50,46 @@ export interface YearData {
   year: number;
   sites: SiteData[];
 }
+
+// --- Annual Consumption Comparison Types ---
+
+export interface AnnualSite {
+  id: string;
+  name: string;
+  code?: string;
+  meterNumber?: string;
+  status: 'active' | 'inactive';
+  archived?: boolean;
+  order?: number;
+  createdAt: string;
+}
+
+export interface AnnualConsumptionRecord {
+  water: number | null; // null if unentered
+  electricity: number | null; // null if unentered
+  monthlyWater?: Partial<Record<MonthKey, number | null>>;
+  monthlyElectricity?: Partial<Record<MonthKey, number | null>>;
+  useMonthlyWaterSum?: boolean;
+  useMonthlyElectricitySum?: boolean;
+  notes?: string;
+  updatedAt?: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  user: string;
+  action: string;
+  details: string;
+}
+
+export interface AnnualComparisonTotals {
+  waterBase: number;
+  waterCurrent: number;
+  waterDiff: number;
+  waterPercent: number | null;
+  electricityBase: number;
+  electricityCurrent: number;
+  electricityDiff: number;
+  electricityPercent: number | null;
+}
