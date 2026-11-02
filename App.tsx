@@ -65,7 +65,11 @@ function App() {
       localStorage.setItem(key, JSON.stringify(data));
     } catch (e: any) {
       if (e.name === 'QuotaExceededError' || e.code === 22) {
-        alert("تنبيه: ذاكرة المتصفح ممتلئة. قد لا يتم حفظ التعديلات الأخيرة أو المرفقات الكبيرة.");
+        try {
+          alert("تنبيه: ذاكرة المتصفح ممتلئة. قد لا يتم حفظ التعديلات الأخيرة أو المرفقات الكبيرة.");
+        } catch {
+          console.warn("Storage quota exceeded: Browser alert not permitted");
+        }
       } else {
         console.error(`Failed to save ${key}`, e);
       }

@@ -8,6 +8,24 @@ const safeFloat = (num: number): number => {
   return Math.round((num + Number.EPSILON) * 100) / 100;
 };
 
+// Iframe-safe confirmation and alert helpers
+const safeConfirm = (message: string): boolean => {
+  try {
+    return window.confirm(message);
+  } catch (e) {
+    console.warn("window.confirm not supported or blocked in this environment:", e);
+    return true;
+  }
+};
+
+const safeAlert = (message: string): void => {
+  try {
+    window.alert(message);
+  } catch (e) {
+    console.warn("window.alert not supported or blocked in this environment:", e, message);
+  }
+};
+
 // Auto-resizing textarea component
 const AutoResizeTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = ({ value, onChange, className, style, ...props }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -184,7 +202,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
   };
 
   const handleDeleteRow = (siteIndex: number, rowIndex: number) => {
-    if (!window.confirm("هل أنت متأكد من حذف هذا البند؟")) return;
+    if (!safeConfirm("هل أنت متأكد من حذف هذا البند؟")) return;
 
     const newData = [...data];
     const site = { ...newData[siteIndex] };
@@ -215,7 +233,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
 
     // Size limit check (2MB) for browser safety
     if (file.size > 2 * 1024 * 1024) {
-      alert("حجم الملف كبير. الرجاء اختيار ملف أصغر من 2 ميجابايت لضمان حفظ البيانات.");
+      safeAlert("حجم الملف كبير. الرجاء اختيار ملف أصغر من 2 ميجابايت لضمان حفظ البيانات.");
       return;
     }
 
@@ -247,7 +265,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
   };
 
   const handleDeleteAttachment = (siteIndex: number, rowIndex: number, attachmentId: string) => {
-    if (!window.confirm("هل أنت متأكد من حذف هذا المرفق؟")) return;
+    if (!safeConfirm("هل أنت متأكد من حذف هذا المرفق؟")) return;
 
     const newData = [...data];
     const site = { ...newData[siteIndex] };
@@ -300,7 +318,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
   const handleDeleteSite = (siteIndex: number, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation(); 
-    if (window.confirm('هل أنت متأكد من رغبتك في حذف هذا الموقع وكافة بياناته؟')) {
+    if (safeConfirm('هل أنت متأكد من رغبتك في حذف هذا الموقع وكافة بياناته؟')) {
       onArchiveSite(data[siteIndex].id);
     }
   };
@@ -308,7 +326,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
   const handleRestore = (siteId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (window.confirm('هل أنت متأكد من رغبتك في استعادة هذا الموقع؟')) {
+    if (safeConfirm('هل أنت متأكد من رغبتك في استعادة هذا الموقع؟')) {
       onRestoreSite(siteId);
     }
   };
@@ -316,7 +334,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
   const handlePermanentDeleteClick = (siteId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (window.confirm('تحذير: هل أنت متأكد من حذف هذا السجل نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')) {
+    if (safeConfirm('تحذير: هل أنت متأكد من حذف هذا السجل نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')) {
       onDeletePermanently(siteId);
     }
   };
@@ -395,16 +413,16 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
         if (currentSite) importedSites.push(currentSite);
 
         if (importedSites.length > 0) {
-          if (window.confirm(`تم العثور على ${importedSites.length} موقع. استبدال البيانات؟`)) {
+          if (safeConfirm(`تم العثور على ${importedSites.length} موقع. استبدال البيانات؟`)) {
             onDataChange(importedSites);
           }
         } else {
-          alert('لم يتم العثور على بيانات صالحة.');
+          safeAlert('لم يتم العثور على بيانات صالحة.');
         }
 
       } catch (error) {
         console.error("Import Error:", error);
-        alert('حدث خطأ أثناء قراءة الملف.');
+        safeAlert('حدث خطأ أثناء قراءة الملف.');
       } finally {
         if (importInputRef.current) importInputRef.current.value = '';
       }
@@ -494,7 +512,7 @@ const ConsumptionTable: React.FC<ConsumptionTableProps> = ({
       writeFile(wb, `Saher_Consumption_${year}.xlsx`);
     } catch (e) {
       console.error("Export Error:", e);
-      alert("حدث خطأ أثناء تصدير الملف.");
+      safeAlert("حدث خطأ أثناء تصدير الملف.");
     }
   };
 
