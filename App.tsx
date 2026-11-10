@@ -5,8 +5,9 @@ import MonthlyKpiCards from './components/MonthlyKpiCards.tsx';
 import Footer from './components/Footer.tsx';
 import ConsumptionTable from './components/ConsumptionTable.tsx';
 import { AnnualConsumptionSystem } from './components/AnnualConsumption/AnnualConsumptionSystem.tsx';
+import { REVERSE_LEGACY_SITE_ID_MAP } from './components/AnnualConsumption/annualHelpers.ts';
 import { INITIAL_SITES } from './constants.ts';
-import { SiteData } from './types.ts';
+import { SiteData, AnnualSite, RowType, MONTHS, MonthKey } from './types.ts';
 import { BarChart3, TableProperties } from 'lucide-react';
 
 // Storage Keys
@@ -257,6 +258,136 @@ function App() {
     }));
   };
 
+  // Helper to resolve a Monthly Consumption site ID from an Annual Consumption site ID or meterNumber
+  const resolveMonthlySiteId = useCallback(
+    (annualSiteId: string, meterNumber?: string, searchArchived = false): string | null => {
+      const mappedId = REVERSE_LEGACY_SITE_ID_MAP[annualSiteId] || annualSiteId;
+      const sourceList = searchArchived ? currentArchivedData : currentSitesData;
+      const byId = sourceList.find((s) => s.id === mappedId || s.id === annualSiteId);
+      if (byId) return byId.id;
+      if (meterNumber && meterNumber.trim() !== '') {
+        const byMeter = sourceList.find((s) => s.meterNumber.trim() === meterNumber.trim());
+        if (byMeter) return byMeter.id;
+      }
+      return null;
+    },
+    [currentSitesData, currentArchivedData]
+  );
+
+  const handleSyncFromAnnualMetadata = useCallback(
+    (
+      annualSiteId: string,
+      meterNumber: string | undefined,
+      updates: { name?: string; meterNumber?: string }
+    ) => {
+      const targetId =
+        resolveMonthlySiteId(annualSiteId, meterNumber, false) ||
+        resolveMonthlySiteId(annualSiteId, meterNumber, true);
+      if (targetId) {
+        const cleanUpdates: Partial<SiteData> = {};
+        if (updates.name !== undefined) cleanUpdates.name = updates.name;
+        if (updates.meterNumber !== undefined) cleanUpdates.meterNumber = updates.meterNumber;
+        handleSiteMetadataUpdate(targetId, cleanUpdates);
+      }
+    },
+    [resolveMonthlySiteId]
+  );
+
+  const handleSyncFromAnnualAdd = useCallback(
+    (annualSite: AnnualSite) => {
+      const timestamp = Date.now();
+      const createEmptyMonthValues = () => {
+        const v: Record<string, number> = {};
+        MONTHS.forEach((m) => (v[m.key] = 0));
+        return v as Record<MonthKey, number>;
+      };
+
+      const newMonthlySite: SiteData = {
+        id: annualSite.id,
+        name: annualSite.name,
+        meterNumber: annualSite.meterNumber || '',
+        startYear: currentYear,
+        rows: [
+          {
+            id: `s_${timestamp}_r1`,
+            label: 'الماء ( متر مكعب)',
+            unit: '',
+            type: RowType.INPUT,
+            isCost: false,
+            values: createEmptyMonthValues(),
+            attachments: [],
+          },
+          {
+            id: `s_${timestamp}_r2`,
+            label: 'قيمة الاستهلاك الماء',
+            type: RowType.INPUT,
+            isCost: true,
+            values: createEmptyMonthValues(),
+            attachments: [],
+          },
+          {
+            id: `s_${timestamp}_r3`,
+            label: 'الكهرباء ( كيلو واط )',
+            unit: '',
+            type: RowType.INPUT,
+            isCost: false,
+            values: createEmptyMonthValues(),
+            attachments: [],
+          },
+          {
+            id: `s_${timestamp}_r4`,
+            label: 'قيمة الاستهلاك الكهرباء',
+            type: RowType.INPUT,
+            isCost: true,
+            values: createEmptyMonthValues(),
+            attachments: [],
+          },
+          {
+            id: `s_${timestamp}_total`,
+            label: 'إجمالي قيمة الاستهلاك',
+            type: RowType.CALCULATED_TOTAL,
+            isCost: false,
+            values: createEmptyMonthValues(),
+            attachments: [],
+          },
+        ],
+      };
+
+      handleGlobalAddSite(newMonthlySite);
+    },
+    [currentYear, templateSites]
+  );
+
+  const handleSyncFromAnnualArchive = useCallback(
+    (annualSiteId: string, meterNumber?: string) => {
+      const targetId = resolveMonthlySiteId(annualSiteId, meterNumber, false);
+      if (targetId) {
+        handleArchiveSite(targetId);
+      }
+    },
+    [resolveMonthlySiteId, currentSitesData, currentYear]
+  );
+
+  const handleSyncFromAnnualRestore = useCallback(
+    (annualSiteId: string, meterNumber?: string) => {
+      const targetId = resolveMonthlySiteId(annualSiteId, meterNumber, true);
+      if (targetId) {
+        handleRestoreSite(targetId);
+      }
+    },
+    [resolveMonthlySiteId, currentArchivedData, currentSitesData, currentYear]
+  );
+
+  const handleSyncFromAnnualDelete = useCallback(
+    (annualSiteId: string, meterNumber?: string) => {
+      const targetId = resolveMonthlySiteId(annualSiteId, meterNumber, true);
+      if (targetId) {
+        handleDeletePermanently(targetId);
+      }
+    },
+    [resolveMonthlySiteId, currentYear]
+  );
+
   return (
     <div id="top" className="flex flex-col min-h-screen bg-[#eef2f6] font-sans">
       {/* Top Corporate Header */}
@@ -326,7 +457,16 @@ function App() {
           </div>
 
           {activeView === 'annual_diff' ? (
-            <AnnualConsumptionSystem onBackToMonthly={() => setActiveView('monthly')} />
+            <AnnualConsumptionSystem
+              onBackToMonthly={() => setActiveView('monthly')}
+              monthlySites={currentSitesData}
+              archivedMonthlySites={currentArchivedData}
+              onSyncSiteMetadata={handleSyncFromAnnualMetadata}
+              onSyncAddSite={handleSyncFromAnnualAdd}
+              onSyncArchiveSite={handleSyncFromAnnualArchive}
+              onSyncRestoreSite={handleSyncFromAnnualRestore}
+              onSyncDeleteSite={handleSyncFromAnnualDelete}
+            />
           ) : (
             <>
               {/* 5 KPI Summary Cards Row */}

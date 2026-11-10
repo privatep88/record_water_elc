@@ -26,6 +26,7 @@ interface AnnualTableProps {
     field: 'water' | 'electricity',
     value: number | null
   ) => void;
+  onUpdateSite?: (id: string, updates: Partial<AnnualSite>) => void;
   onOpenMonthlyModal: (site: AnnualSite, year: number) => void;
   totals: {
     waterBase: number;
@@ -45,6 +46,7 @@ export const AnnualTable: React.FC<AnnualTableProps> = ({
   sites,
   records,
   onUpdateConsumption,
+  onUpdateSite,
   onOpenMonthlyModal,
   totals,
 }) => {
@@ -56,6 +58,8 @@ export const AnnualTable: React.FC<AnnualTableProps> = ({
   } | null>(null);
 
   const [tempValue, setTempValue] = useState<string>('');
+  const [editingSiteNameId, setEditingSiteNameId] = useState<string | null>(null);
+  const [tempSiteName, setTempSiteName] = useState<string>('');
 
   const activeSites = sites.filter((s) => !s.archived);
 
@@ -221,9 +225,67 @@ export const AnnualTable: React.FC<AnnualTableProps> = ({
                     }`}
                   >
                     {/* 1. المقر */}
-                    <td className="p-3 border-r border-slate-200 text-right pr-4 font-bold text-slate-800 bg-[#f8fafc]">
+                    <td
+                      onClick={() => {
+                        if (onUpdateSite && editingSiteNameId !== site.id) {
+                          setEditingSiteNameId(site.id);
+                          setTempSiteName(site.name);
+                        }
+                      }}
+                      className="p-3 border-r border-slate-200 text-right pr-4 font-bold text-slate-800 bg-[#f8fafc] cursor-pointer group"
+                      title="اضغط لتعديل اسم المقر (مرتبط بجدول الاستهلاك الشهري)"
+                    >
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-900">{site.name}</span>
+                        {editingSiteNameId === site.id ? (
+                          <div
+                            className="flex items-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="text"
+                              autoFocus
+                              value={tempSiteName}
+                              onChange={(e) => setTempSiteName(e.target.value)}
+                              onBlur={() => {
+                                if (tempSiteName.trim() && onUpdateSite) {
+                                  onUpdateSite(site.id, { name: tempSiteName.trim() });
+                                }
+                                setEditingSiteNameId(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  if (tempSiteName.trim() && onUpdateSite) {
+                                    onUpdateSite(site.id, { name: tempSiteName.trim() });
+                                  }
+                                  setEditingSiteNameId(null);
+                                } else if (e.key === 'Escape') {
+                                  setEditingSiteNameId(null);
+                                }
+                              }}
+                              className="w-full p-1 text-xs border-2 border-blue-500 rounded bg-white shadow-xs font-bold text-slate-900 outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (tempSiteName.trim() && onUpdateSite) {
+                                  onUpdateSite(site.id, { name: tempSiteName.trim() });
+                                }
+                                setEditingSiteNameId(null);
+                              }}
+                              className="text-emerald-600 p-0.5 shrink-0"
+                            >
+                              <Check size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-sm font-bold text-slate-900">{site.name}</span>
+                            <Edit3
+                              size={12}
+                              className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity print:hidden shrink-0"
+                            />
+                          </div>
+                        )}
                         {site.meterNumber && (
                           <span className="text-[11px] text-slate-400 font-mono mt-0.5">
                             عداد: {site.meterNumber}

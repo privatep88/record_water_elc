@@ -9,10 +9,22 @@ export const ANNUAL_STORAGE_KEYS = {
   SELECTED_CURRENT_YEAR: 'saher_annual_current_year_v1',
 };
 
+export const LEGACY_SITE_ID_MAP: Record<string, string> = {
+  site_1: 'site_saed_villa',
+  site_2: 'site_saed_battuta',
+  site_3: 'site_saed_ajman',
+};
+
+export const REVERSE_LEGACY_SITE_ID_MAP: Record<string, string> = {
+  site_saed_villa: 'site_1',
+  site_saed_battuta: 'site_2',
+  site_saed_ajman: 'site_3',
+};
+
 export const DEFAULT_ANNUAL_SITES: AnnualSite[] = [
   {
     id: 'site_saed_villa',
-    name: 'ساعد – الفيلا (الدوريات)',
+    name: 'فيلا 2 محمد بن زايد',
     code: 'SD-V01',
     meterNumber: '3934453626',
     status: 'active',
@@ -22,7 +34,7 @@ export const DEFAULT_ANNUAL_SITES: AnnualSite[] = [
   },
   {
     id: 'site_saed_battuta',
-    name: 'ساعد – ابن بطوطة مول',
+    name: 'مقر ابن بطوطة',
     code: 'SD-B02',
     meterNumber: 't0012704',
     status: 'active',
@@ -32,7 +44,7 @@ export const DEFAULT_ANNUAL_SITES: AnnualSite[] = [
   },
   {
     id: 'site_saed_ajman',
-    name: 'ساعد – عجمان التلة',
+    name: 'توجيه عجمان التلة',
     code: 'SD-A03',
     meterNumber: '221000514609',
     status: 'active',

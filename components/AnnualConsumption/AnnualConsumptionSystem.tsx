@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { AnnualSite, AnnualConsumptionRecord, AuditLogEntry } from '../../types.ts';
+import { AnnualSite, AnnualConsumptionRecord, AuditLogEntry, SiteData } from '../../types.ts';
 import {
   ANNUAL_STORAGE_KEYS,
   DEFAULT_ANNUAL_SITES,
   DEFAULT_CONSUMPTION_RECORDS,
   INITIAL_AUDIT_LOGS,
+  LEGACY_SITE_ID_MAP,
   calculateDiff,
   roundTo,
 } from './annualHelpers.ts';
@@ -30,10 +31,28 @@ import {
 
 interface AnnualConsumptionSystemProps {
   onBackToMonthly?: () => void;
+  monthlySites?: SiteData[];
+  archivedMonthlySites?: SiteData[];
+  onSyncSiteMetadata?: (
+    annualSiteId: string,
+    meterNumber: string | undefined,
+    updates: { name?: string; meterNumber?: string }
+  ) => void;
+  onSyncAddSite?: (site: AnnualSite) => void;
+  onSyncArchiveSite?: (annualSiteId: string, meterNumber?: string) => void;
+  onSyncRestoreSite?: (annualSiteId: string, meterNumber?: string) => void;
+  onSyncDeleteSite?: (annualSiteId: string, meterNumber?: string) => void;
 }
 
 export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = ({
   onBackToMonthly,
+  monthlySites,
+  archivedMonthlySites,
+  onSyncSiteMetadata,
+  onSyncAddSite,
+  onSyncArchiveSite,
+  onSyncRestoreSite,
+  onSyncDeleteSite,
 }) => {
   // --- States ---
   const [baseYear, setBaseYear] = useState<number>(() => {
@@ -158,6 +177,86 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
     addAuditLog('تغيير السنة الحالية', `تم تحديد السنة الحالية إلى ${year}`);
   };
 
+  // Synchronize site names, meter numbers, and active/archived status from Monthly Consumption Table
+  useEffect(() => {
+    if (!monthlySites) return;
+
+    setSites((prevSites) => {
+      const nextSites = [...prevSites];
+      let changed = false;
+
+      const findMatchingIndex = (mSite: SiteData) => {
+        const mappedLegacyId = LEGACY_SITE_ID_MAP[mSite.id];
+        return nextSites.findIndex(
+          (aSite) =>
+            aSite.id === mSite.id ||
+            (mappedLegacyId && aSite.id === mappedLegacyId) ||
+            (mSite.meterNumber &&
+              aSite.meterNumber &&
+              aSite.meterNumber.trim() !== '' &&
+              aSite.meterNumber.trim() === mSite.meterNumber.trim())
+        );
+      };
+
+      // Sync active monthly sites
+      monthlySites.forEach((mSite, idx) => {
+        const matchIdx = findMatchingIndex(mSite);
+        if (matchIdx !== -1) {
+          const existing = nextSites[matchIdx];
+          if (
+            existing.name !== mSite.name ||
+            (mSite.meterNumber !== undefined && existing.meterNumber !== mSite.meterNumber) ||
+            existing.archived === true
+          ) {
+            nextSites[matchIdx] = {
+              ...existing,
+              name: mSite.name,
+              meterNumber: mSite.meterNumber,
+              archived: false,
+            };
+            changed = true;
+          }
+        } else {
+          nextSites.push({
+            id: LEGACY_SITE_ID_MAP[mSite.id] || mSite.id,
+            name: mSite.name,
+            meterNumber: mSite.meterNumber,
+            status: 'active',
+            archived: false,
+            order: idx + 1,
+            createdAt: new Date().toISOString(),
+          });
+          changed = true;
+        }
+      });
+
+      // Sync archived monthly sites
+      if (archivedMonthlySites) {
+        archivedMonthlySites.forEach((mSite) => {
+          const matchIdx = findMatchingIndex(mSite);
+          if (matchIdx !== -1) {
+            const existing = nextSites[matchIdx];
+            if (
+              existing.name !== mSite.name ||
+              existing.meterNumber !== mSite.meterNumber ||
+              !existing.archived
+            ) {
+              nextSites[matchIdx] = {
+                ...existing,
+                name: mSite.name,
+                meterNumber: mSite.meterNumber,
+                archived: true,
+              };
+              changed = true;
+            }
+          }
+        });
+      }
+
+      return changed ? nextSites : prevSites;
+    });
+  }, [monthlySites, archivedMonthlySites]);
+
   // Add a new site
   const handleAddSite = (newSiteData: Omit<AnnualSite, 'id' | 'createdAt'>) => {
     const newSite: AnnualSite = {
@@ -168,6 +267,9 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
     };
     const nextSites = [...sites, newSite];
     setSites(nextSites);
+    if (onSyncAddSite) {
+      onSyncAddSite(newSite);
+    }
     addAuditLog('إضافة مقر جديد', `تمت إضافة مقر "${newSite.name}" (${newSite.code || 'بدون رمز'})`);
   };
 
@@ -176,6 +278,12 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
     const target = sites.find((s) => s.id === id);
     const nextSites = sites.map((s) => (s.id === id ? { ...s, ...updates } : s));
     setSites(nextSites);
+    if (onSyncSiteMetadata && (updates.name !== undefined || updates.meterNumber !== undefined)) {
+      onSyncSiteMetadata(id, target?.meterNumber, {
+        name: updates.name,
+        meterNumber: updates.meterNumber,
+      });
+    }
     addAuditLog(
       'تعديل بيانات مقر',
       `تم تحديث بيانات مقر "${target?.name || id}" إلى "${updates.name || target?.name}"`
@@ -187,6 +295,9 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
     const target = sites.find((s) => s.id === id);
     const nextSites = sites.map((s) => (s.id === id ? { ...s, archived: true } : s));
     setSites(nextSites);
+    if (onSyncArchiveSite) {
+      onSyncArchiveSite(id, target?.meterNumber);
+    }
     addAuditLog('أرشفة مقر', `تم نقل مقر "${target?.name || id}" إلى الأرشيف مع الاحتفاظ بكافة سجلاته`);
   };
 
@@ -195,6 +306,9 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
     const target = sites.find((s) => s.id === id);
     const nextSites = sites.map((s) => (s.id === id ? { ...s, archived: false } : s));
     setSites(nextSites);
+    if (onSyncRestoreSite) {
+      onSyncRestoreSite(id, target?.meterNumber);
+    }
     addAuditLog('استعادة مقر', `تمت استعادة مقر "${target?.name || id}" من الأرشيف إلى قائمة المقرات النشطة`);
   };
 
@@ -208,6 +322,10 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
     const nextRecords = { ...records };
     delete nextRecords[id];
     setRecords(nextRecords);
+
+    if (onSyncDeleteSite) {
+      onSyncDeleteSite(id, target?.meterNumber);
+    }
 
     addAuditLog('حذف مقر نهائياً', `تم حذف مقر "${target?.name || id}" وسجلاته نهائياً من قاعدة البيانات`);
   };
@@ -561,6 +679,7 @@ export const AnnualConsumptionSystem: React.FC<AnnualConsumptionSystemProps> = (
         sites={sites}
         records={records}
         onUpdateConsumption={handleUpdateConsumption}
+        onUpdateSite={handleUpdateSite}
         onOpenMonthlyModal={handleOpenMonthlyModal}
         totals={totals}
       />
