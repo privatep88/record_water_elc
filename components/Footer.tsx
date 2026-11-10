@@ -1,8 +1,20 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, ChevronLeft } from 'lucide-react';
+import footerSkylineAsset from '../src/assets/images/saher_footer_skyline_1794290957010.jpg';
+
+const PUBLIC_FOOTER_FALLBACK = `${import.meta.env.BASE_URL}images/saher-footer.jpg`;
 
 const Footer: React.FC = () => {
+  const [skylineSrc, setSkylineSrc] = useState<string>(footerSkylineAsset);
   const [skylineError, setSkylineError] = useState(false);
+
+  const handleSkylineError = () => {
+    if (skylineSrc !== PUBLIC_FOOTER_FALLBACK) {
+      setSkylineSrc(PUBLIC_FOOTER_FALLBACK);
+    } else {
+      setSkylineError(true);
+    }
+  };
 
   return (
     <footer className="bg-[#091526] text-blue-50 pt-7 pb-4 mt-auto border-t-[3px] border-[#eab308] relative overflow-hidden">
@@ -89,13 +101,24 @@ const Footer: React.FC = () => {
 
           {/* Column 4 (Far Left - RTL End): Architectural Skyline Vignette */}
           <div className="md:col-span-3 flex justify-end items-end self-stretch">
-            <div className="w-full max-w-[270px] h-[135px] rounded-tr-[95px] rounded-tl-xl rounded-b-xl overflow-hidden border-t-[3px] border-r-[3px] border-[#eab308] shadow-lg relative bg-[#112240]">
+            <div
+              className="w-full max-w-[270px] h-[135px] rounded-tr-[95px] rounded-tl-xl rounded-b-xl overflow-hidden border-t-[3px] border-r-[3px] border-[#eab308] shadow-lg relative bg-[#112240]"
+              style={
+                !skylineError
+                  ? {
+                      backgroundImage: `url(${skylineSrc})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
+                    }
+                  : undefined
+              }
+            >
               {!skylineError ? (
                 <img
-                  src="/src/assets/images/saher_footer_skyline_1794290957010.jpg"
+                  src={skylineSrc}
                   alt="SAHER Corporate Skyline"
-                  referrerPolicy="no-referrer"
-                  onError={() => setSkylineError(true)}
+                  onError={handleSkylineError}
                   className="w-full h-full object-cover object-center"
                 />
               ) : (

@@ -1,18 +1,41 @@
 import React, { useState } from 'react';
 import { Droplet, Zap } from 'lucide-react';
+import heroBannerAsset from '../src/assets/images/saher_hero_banner_1794290957278.jpg';
+
+const PUBLIC_HERO_FALLBACK = `${import.meta.env.BASE_URL}images/saher-header.jpg`;
 
 export const HeroBanner: React.FC = () => {
+  const [imgSrc, setImgSrc] = useState<string>(heroBannerAsset);
   const [imgError, setImgError] = useState(false);
 
+  const handleImageError = () => {
+    if (imgSrc !== PUBLIC_HERO_FALLBACK) {
+      setImgSrc(PUBLIC_HERO_FALLBACK);
+    } else {
+      setImgError(true);
+    }
+  };
+
   return (
-    <section className="relative w-full h-[210px] sm:h-[245px] md:h-[265px] bg-[#091526] border-b-[3px] border-[#eab308] overflow-hidden select-none print:hidden">
-      {/* Background Image with Fallback */}
+    <section
+      className="relative w-full h-[210px] sm:h-[245px] md:h-[265px] bg-[#091526] border-b-[3px] border-[#eab308] overflow-hidden select-none print:hidden"
+      style={
+        !imgError
+          ? {
+              backgroundImage: `url(${imgSrc})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }
+          : undefined
+      }
+    >
+      {/* Background Image with Bundled + Public Fallback */}
       {!imgError ? (
         <img
-          src="/src/assets/images/saher_hero_banner_1794290957278.jpg"
+          src={imgSrc}
           alt="SAHER Smart Utilities Management Banner"
-          referrerPolicy="no-referrer"
-          onError={() => setImgError(true)}
+          onError={handleImageError}
           className="w-full h-full object-cover object-center"
         />
       ) : (
