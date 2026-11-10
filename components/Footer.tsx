@@ -110,7 +110,7 @@ const Footer: React.FC = () => {
         <div className="border-t border-blue-900/60 pt-3 flex flex-col justify-center items-center gap-1 text-xs">
           <div className="flex items-center gap-1.5 text-blue-200/80 font-medium">
             <span>إعداد وتصميم /</span>
-            <span className="font-bold text-white">خالد الجفري</span>
+            <span className="font-bold text-white">خالد الهاشمي</span>
           </div>
 
           <div className="text-blue-300/70 text-center font-light">
