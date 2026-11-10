@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, LoaderCircle, CheckCircle } from 'lucide-react';
+import { Calendar, LoaderCircle, CheckCircle, ChevronDown } from 'lucide-react';
 
 interface HeaderProps {
   currentYear: number;
@@ -8,89 +8,93 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ currentYear, onYearChange, autoSaveStatus }) => {
-  // Generate years from current year to 2099
-  const startYear = new Date().getFullYear();
+  const startYear = 2020;
   const endYear = 2099;
   const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 
   return (
-    <header className="bg-[#091526] border-b-4 border-[#eab308] shadow-xl sticky top-0 z-50 h-28 print:hidden transition-all duration-300">
+    <header className="bg-[#091526] border-b-[3px] border-[#eab308] shadow-lg sticky top-0 z-50 h-20 sm:h-24 print:hidden transition-all duration-200">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 h-full relative">
         <div className="flex justify-between items-center h-full">
-          
-          {/* Branding Section - Right (RTL Start) */}
-          <div className="flex items-center gap-6 z-20 relative shrink-0">
-             <div className="flex items-center gap-5 group select-none cursor-default">
-               {/* Logo Mark */}
-               <div className="relative w-16 h-16 bg-gradient-to-br from-blue-600 via-blue-700 to-slate-900 rounded-2xl shadow-lg flex items-center justify-center border border-blue-500/30 overflow-hidden transform group-hover:scale-105 transition-all duration-300">
-                   {/* Gloss effect */}
-                   <div className="absolute top-0 left-0 w-full h-1/2 bg-white/10 blur-[1px]"></div>
-                   
-                   {/* The Letter S */}
-                   <span className="font-black text-4xl text-white italic relative z-10 drop-shadow-md font-sans">S</span>
-                   
-                   {/* Dot/Accent */}
-                   <div className="absolute bottom-2.5 right-2.5 w-3 h-3 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.8)] animate-pulse"></div>
-               </div>
-
-               {/* Text Logo */}
-               <div className="flex flex-col justify-center">
-                   <h1 className="text-4xl font-black text-white tracking-wider leading-none font-sans drop-shadow-sm">
-                       SAHER
-                   </h1>
-                   <div className="flex items-center gap-2 mt-1.5">
-                       <div className="h-[3px] w-5 bg-yellow-500 rounded-full"></div>
-                       <span className="text-xs font-bold text-blue-200 tracking-[0.2em] uppercase group-hover:text-white transition-colors whitespace-nowrap">
-                           FOR SMART SERVICES
-                       </span>
-                   </div>
-               </div>
-            </div>
-          </div>
-
-          {/* Centered Title Section - Absolute Center */}
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col justify-center items-center text-center w-full pointer-events-none hidden md:flex z-10">
-              <span className="text-yellow-500 text-lg font-bold tracking-wider mb-2 shadow-black drop-shadow-sm px-3 py-0.5 rounded bg-blue-950/30 border border-blue-900/30 backdrop-blur-sm">
-                إدارة الخدمات العامة / قسم إدارة المرافق
-              </span>
-              <h1 className="text-lg md:text-xl font-bold text-white leading-tight opacity-95 whitespace-nowrap drop-shadow-md">
-                نظام تسجيل نسبة استهلاك الماء والكهرباء لمقرات ساهر
-              </h1>
-          </div>
-
-          {/* Controls - Left (RTL End) */}
+          {/* Right Zone (RTL Start): SAHER Brand Lockup */}
           <div className="flex items-center gap-4 z-20 relative shrink-0">
-            {/* Auto Save Status Indicator */}
-            <div className="relative h-10 w-40 hidden lg:block">
-              <div className={`absolute inset-0 flex items-center justify-center bg-blue-950/50 rounded-xl p-2 border border-blue-800/50 shadow-inner text-xs transition-opacity duration-300 ${autoSaveStatus !== 'idle' ? 'opacity-100' : 'opacity-0'}`}>
-                   {autoSaveStatus === 'saving' && (
-                     <>
-                       <LoaderCircle size={16} className="animate-spin text-blue-300 mr-2" />
-                       <span className="text-blue-300">جاري الحفظ...</span>
-                     </>
-                   )}
-                   {autoSaveStatus === 'saved' && (
-                     <>
-                       <CheckCircle size={16} className="text-green-400 mr-2" />
-                       <span className="text-green-400">تم الحفظ تلقائياً</span>
-                     </>
-                   )}
+            <div className="flex items-center gap-3.5 group select-none cursor-default">
+              {/* Blue Square S Icon (Far Right in RTL) */}
+              <div className="relative w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-[#2563eb] via-[#1d4ed8] to-[#1e3a8a] rounded-2xl shadow-md flex items-center justify-center border border-blue-400/40 overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1/2 bg-white/15 blur-[0.5px]" />
+                <span className="font-black text-3xl sm:text-4xl text-white italic relative z-10 drop-shadow-sm font-sans">
+                  S
+                </span>
+                <div className="absolute bottom-2 right-2 w-2.5 h-2.5 bg-[#eab308] rounded-full shadow-[0_0_6px_rgba(234,179,8,0.9)]" />
+              </div>
+
+              {/* SAHER Wordmark */}
+              <div className="flex flex-col justify-center text-left" dir="ltr">
+                <span className="text-2xl sm:text-[34px] font-black text-white tracking-wider leading-none font-sans">
+                  SAHER
+                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-blue-100 tracking-[0.16em] uppercase whitespace-nowrap">
+                    FOR SMART SERVICES
+                  </span>
+                  <div className="h-[2.5px] w-4 bg-[#eab308] rounded-full" />
+                </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center bg-blue-950/50 rounded-xl p-2 border border-blue-800/50 shadow-inner group hover:border-blue-600 transition-colors">
-              <span className="px-2 text-blue-300 text-sm font-medium hidden lg:inline ml-1">السنة المالية:</span>
-              <select 
-                value={currentYear}
-                onChange={(e) => onYearChange(Number(e.target.value))}
-                className="bg-transparent border-none text-lg font-bold text-white focus:ring-0 rounded py-0 pl-2 pr-8 cursor-pointer outline-none [&>option]:text-slate-900 font-mono h-10"
-              >
-                {years.map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-              <div className="px-2 text-yellow-500 border-r border-blue-800/50 mr-1 group-hover:text-yellow-400 transition-colors">
-                <Calendar size={22} />
+          {/* Center Zone: Department & System Title */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex flex-col justify-center items-center text-center pointer-events-none z-10">
+            <span className="text-[#f59e0b] text-base lg:text-lg font-extrabold tracking-wide mb-1 drop-shadow-xs whitespace-nowrap">
+              إدارة الخدمات العامة / قسم إدارة المرافق
+            </span>
+            <h1 className="text-base lg:text-xl font-bold text-white leading-snug whitespace-nowrap drop-shadow-sm">
+              نظام تسجيل ومتابعة استهلاك المياه والكهرباء لمقرات ساهر
+            </h1>
+          </div>
+
+          {/* Left Zone (RTL End): Fiscal Year Selector & Auto-Save Status */}
+          <div className="flex items-center gap-3 z-20 relative shrink-0">
+            {/* Auto-save feedback */}
+            {autoSaveStatus !== 'idle' && (
+              <div className="hidden lg:flex items-center gap-1.5 bg-[#112240]/90 rounded-xl px-3 py-2 border border-blue-800/60 text-xs">
+                {autoSaveStatus === 'saving' && (
+                  <>
+                    <LoaderCircle size={15} className="animate-spin text-blue-300" />
+                    <span className="text-blue-200 font-medium">جاري الحفظ...</span>
+                  </>
+                )}
+                {autoSaveStatus === 'saved' && (
+                  <>
+                    <CheckCircle size={15} className="text-emerald-400" />
+                    <span className="text-emerald-400 font-medium">تم الحفظ تلقائياً</span>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Fiscal Year Control Box */}
+            <div className="flex items-center bg-[#112240]/90 rounded-xl px-3.5 py-2 border border-blue-800/70 shadow-inner hover:border-blue-600 transition-colors">
+              <span className="text-blue-200 text-xs sm:text-sm font-medium ml-2 whitespace-nowrap">
+                السنة المالية:
+              </span>
+              <div className="relative flex items-center">
+                <select
+                  value={currentYear}
+                  onChange={(e) => onYearChange(Number(e.target.value))}
+                  aria-label="السنة المالية"
+                  className="appearance-none bg-transparent border-none text-base sm:text-lg font-bold text-white focus:ring-0 py-0 pl-6 pr-1 cursor-pointer outline-none [&>option]:text-slate-900 font-mono tabular-nums"
+                >
+                  {years.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={15} className="text-blue-300 pointer-events-none absolute left-1" />
+              </div>
+              <div className="pr-2.5 mr-1.5 border-r border-blue-800/70 text-[#eab308] flex items-center">
+                <Calendar size={20} />
               </div>
             </div>
           </div>

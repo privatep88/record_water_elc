@@ -1,17 +1,19 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header.tsx';
+import HeroBanner from './components/HeroBanner.tsx';
+import MonthlyKpiCards from './components/MonthlyKpiCards.tsx';
 import Footer from './components/Footer.tsx';
 import ConsumptionTable from './components/ConsumptionTable.tsx';
 import { AnnualConsumptionSystem } from './components/AnnualConsumption/AnnualConsumptionSystem.tsx';
 import { INITIAL_SITES } from './constants.ts';
 import { SiteData } from './types.ts';
-import { BarChart3, TableProperties, Sparkles } from 'lucide-react';
+import { BarChart3, TableProperties } from 'lucide-react';
 
 // Storage Keys
 const STORAGE_KEYS = {
   DATA: 'saher_dashboard_data',
   TEMPLATE: 'saher_dashboard_template',
-  ARCHIVES: 'saher_dashboard_archives'
+  ARCHIVES: 'saher_dashboard_archives',
 };
 
 // Helper function to deep clone the initial data so we don't modify the constant
@@ -28,7 +30,7 @@ function App() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
   const isMounted = useRef(false);
-  
+
   // Update document title when year changes
   useEffect(() => {
     document.title = `نسبة استهلاك الماء والكهرباء - ساهر - ${currentYear}`;
@@ -40,7 +42,7 @@ function App() {
       const saved = localStorage.getItem(STORAGE_KEYS.TEMPLATE);
       return saved ? JSON.parse(saved) : getInitialData();
     } catch (e) {
-      console.warn("Error reading template from storage", e);
+      console.warn('Error reading template from storage', e);
       return getInitialData();
     }
   });
@@ -50,7 +52,7 @@ function App() {
       const saved = localStorage.getItem(STORAGE_KEYS.DATA);
       return saved ? JSON.parse(saved) : {};
     } catch (e) {
-      console.warn("Error reading data from storage", e);
+      console.warn('Error reading data from storage', e);
       return {};
     }
   });
@@ -71,9 +73,9 @@ function App() {
     } catch (e: any) {
       if (e.name === 'QuotaExceededError' || e.code === 22) {
         try {
-          alert("تنبيه: ذاكرة المتصفح ممتلئة. قد لا يتم حفظ التعديلات الأخيرة أو المرفقات الكبيرة.");
+          alert('تنبيه: ذاكرة المتصفح ممتلئة. قد لا يتم حفظ التعديلات الأخيرة أو المرفقات الكبيرة.');
         } catch {
-          console.warn("Storage quota exceeded: Browser alert not permitted");
+          console.warn('Storage quota exceeded: Browser alert not permitted');
         }
       } else {
         console.error(`Failed to save ${key}`, e);
@@ -83,61 +85,49 @@ function App() {
 
   // Auto-save Effect
   useEffect(() => {
-    // This effect runs automatically whenever data changes.
-    // We check `isMounted.current` to prevent it from running on the initial page load.
     if (isMounted.current) {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       setAutoSaveStatus('saving');
-      
-      // Debounce the save operation: wait 1000ms after the last change before saving.
+
       saveTimeoutRef.current = window.setTimeout(() => {
-          saveData(STORAGE_KEYS.DATA, dataByYear);
-          saveData(STORAGE_KEYS.TEMPLATE, templateSites);
-          saveData(STORAGE_KEYS.ARCHIVES, archivesByYear);
-          setAutoSaveStatus('saved');
-  
-          // Show "saved" message for 1.5 seconds, then return to idle.
-          saveTimeoutRef.current = window.setTimeout(() => {
-              setAutoSaveStatus('idle');
-          }, 1500);
+        saveData(STORAGE_KEYS.DATA, dataByYear);
+        saveData(STORAGE_KEYS.TEMPLATE, templateSites);
+        saveData(STORAGE_KEYS.ARCHIVES, archivesByYear);
+        setAutoSaveStatus('saved');
+
+        saveTimeoutRef.current = window.setTimeout(() => {
+          setAutoSaveStatus('idle');
+        }, 1500);
       }, 1000);
     } else {
-      // On first render, just mark the component as mounted.
       isMounted.current = true;
-      // Also perform an initial save without showing status, in case data was loaded but needs syncing.
       saveData(STORAGE_KEYS.DATA, dataByYear);
       saveData(STORAGE_KEYS.TEMPLATE, templateSites);
       saveData(STORAGE_KEYS.ARCHIVES, archivesByYear);
     }
 
-    // Cleanup timeout on component unmount or before the next effect runs.
     return () => {
-        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    }
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
   }, [dataByYear, templateSites, archivesByYear, saveData]);
-
 
   // Manual Save Handler
   const handleManualSave = useCallback(() => {
-    // If an auto-save is pending, clear it and save immediately
     if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
+      clearTimeout(saveTimeoutRef.current);
     }
 
     saveData(STORAGE_KEYS.DATA, dataByYear);
     saveData(STORAGE_KEYS.TEMPLATE, templateSites);
     saveData(STORAGE_KEYS.ARCHIVES, archivesByYear);
-    
-    // Also trigger the "Saved" status in the header for feedback
+
     setAutoSaveStatus('saved');
     saveTimeoutRef.current = window.setTimeout(() => {
-        setAutoSaveStatus('idle');
+      setAutoSaveStatus('idle');
     }, 1500);
-
   }, [dataByYear, templateSites, archivesByYear, saveData]);
 
   // Get the data for the currently selected year.
-  // If no data exists for this year, generate a fresh copy based on the CURRENT template.
   const currentSitesData = useMemo(() => {
     let data: SiteData[] = [];
     if (dataByYear[currentYear]) {
@@ -146,10 +136,17 @@ function App() {
       data = JSON.parse(JSON.stringify(templateSites));
     }
 
-    // Filter out sites that start in a future year relative to the current view.
-    return data.filter(site => !site.startYear || site.startYear <= currentYear);
-
+    return data.filter((site) => !site.startYear || site.startYear <= currentYear);
   }, [currentYear, dataByYear, templateSites]);
+
+  // Get previous year data for KPI comparison
+  const previousYearSitesData = useMemo(() => {
+    const prevYear = currentYear - 1;
+    if (dataByYear[prevYear]) {
+      return dataByYear[prevYear].filter((site) => !site.startYear || site.startYear <= prevYear);
+    }
+    return [];
+  }, [currentYear, dataByYear]);
 
   // Get the archived data for the currently selected year
   const currentArchivedData = useMemo(() => {
@@ -158,24 +155,22 @@ function App() {
 
   // Handle value updates from the table (local to the current year)
   const handleDataChange = (newData: SiteData[]) => {
-    setDataByYear(prev => ({
+    setDataByYear((prev) => ({
       ...prev,
-      [currentYear]: newData
+      [currentYear]: newData,
     }));
   };
 
   // Handle global site addition (updates ALL years and the template)
   const handleGlobalAddSite = (newSite: SiteData) => {
-    // 1. Update the template
-    setTemplateSites(prev => [...prev, JSON.parse(JSON.stringify(newSite))]);
+    setTemplateSites((prev) => [...prev, JSON.parse(JSON.stringify(newSite))]);
 
-    // 2. Update ONLY the years that have already been instantiated
-    setDataByYear(prev => {
+    setDataByYear((prev) => {
       const updatedDataByYear = { ...prev };
-      
+
       const appendSiteToYear = (y: number) => {
         if (updatedDataByYear[y]) {
-          const exists = updatedDataByYear[y].some(s => s.id === newSite.id);
+          const exists = updatedDataByYear[y].some((s) => s.id === newSite.id);
           if (!exists) {
             updatedDataByYear[y] = [...updatedDataByYear[y], JSON.parse(JSON.stringify(newSite))];
           }
@@ -183,12 +178,12 @@ function App() {
       };
 
       if (!updatedDataByYear[currentYear]) {
-        updatedDataByYear[currentYear] = [...templateSites, JSON.parse(JSON.stringify(newSite))]; 
+        updatedDataByYear[currentYear] = [...templateSites, JSON.parse(JSON.stringify(newSite))];
       } else {
         appendSiteToYear(currentYear);
       }
 
-      Object.keys(updatedDataByYear).forEach(key => {
+      Object.keys(updatedDataByYear).forEach((key) => {
         const yearKey = Number(key);
         if (yearKey > currentYear) {
           appendSiteToYear(yearKey);
@@ -201,27 +196,28 @@ function App() {
 
   // Handle updates to site metadata
   const handleSiteMetadataUpdate = (siteId: string, updates: Partial<SiteData>) => {
-    const updateList = (list: SiteData[]) => list.map(s => {
-      if (s.id === siteId) {
-        return { ...s, ...updates };
-      }
-      return s;
-    });
+    const updateList = (list: SiteData[]) =>
+      list.map((s) => {
+        if (s.id === siteId) {
+          return { ...s, ...updates };
+        }
+        return s;
+      });
 
-    setTemplateSites(prev => updateList(prev));
+    setTemplateSites((prev) => updateList(prev));
 
-    setDataByYear(prev => {
+    setDataByYear((prev) => {
       const next = { ...prev };
-      Object.keys(next).forEach(key => {
+      Object.keys(next).forEach((key) => {
         const year = Number(key);
         next[year] = updateList(next[year]);
       });
       return next;
     });
 
-    setArchivesByYear(prev => {
+    setArchivesByYear((prev) => {
       const next = { ...prev };
-      Object.keys(next).forEach(key => {
+      Object.keys(next).forEach((key) => {
         const year = Number(key);
         next[year] = updateList(next[year]);
       });
@@ -230,103 +226,135 @@ function App() {
   };
 
   const handleArchiveSite = (siteId: string) => {
-    const siteToArchive = currentSitesData.find(s => s.id === siteId);
+    const siteToArchive = currentSitesData.find((s) => s.id === siteId);
     if (!siteToArchive) return;
 
-    const newActiveData = currentSitesData.filter(s => s.id !== siteId);
+    const newActiveData = currentSitesData.filter((s) => s.id !== siteId);
     handleDataChange(newActiveData);
 
-    setArchivesByYear(prev => ({
+    setArchivesByYear((prev) => ({
       ...prev,
-      [currentYear]: [...(prev[currentYear] || []), siteToArchive]
+      [currentYear]: [...(prev[currentYear] || []), siteToArchive],
     }));
   };
 
   const handleRestoreSite = (siteId: string) => {
-    const siteToRestore = currentArchivedData.find(s => s.id === siteId);
+    const siteToRestore = currentArchivedData.find((s) => s.id === siteId);
     if (!siteToRestore) return;
 
-    setArchivesByYear(prev => ({
+    setArchivesByYear((prev) => ({
       ...prev,
-      [currentYear]: prev[currentYear].filter(s => s.id !== siteId)
+      [currentYear]: prev[currentYear].filter((s) => s.id !== siteId),
     }));
 
     handleDataChange([...currentSitesData, siteToRestore]);
   };
 
   const handleDeletePermanently = (siteId: string) => {
-    setArchivesByYear(prev => ({
+    setArchivesByYear((prev) => ({
       ...prev,
-      [currentYear]: prev[currentYear].filter(s => s.id !== siteId)
+      [currentYear]: prev[currentYear].filter((s) => s.id !== siteId),
     }));
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 font-sans">
-      <Header currentYear={currentYear} onYearChange={setCurrentYear} autoSaveStatus={autoSaveStatus} />
-      
-      <main className="flex-grow w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Main Navigation Tabs */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-5 print:hidden">
-          <button
-            type="button"
-            onClick={() => setActiveView('monthly')}
-            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm cursor-pointer ${
-              activeView === 'monthly'
-                ? 'bg-[#091526] text-white border-b-4 border-yellow-500 shadow-md ring-2 ring-blue-900/30'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            <TableProperties size={18} className={activeView === 'monthly' ? 'text-yellow-400' : 'text-slate-500'} />
-            <span>جدول الاستهلاك الشهري (ساهر)</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold font-mono bg-blue-100 text-blue-800">
-              {currentYear}
-            </span>
-          </button>
+    <div id="top" className="flex flex-col min-h-screen bg-[#eef2f6] font-sans">
+      {/* Top Corporate Header */}
+      <Header
+        currentYear={currentYear}
+        onYearChange={setCurrentYear}
+        autoSaveStatus={autoSaveStatus}
+      />
 
-          <button
-            type="button"
-            onClick={() => setActiveView('annual_diff')}
-            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm cursor-pointer ${
-              activeView === 'annual_diff'
-                ? 'bg-[#091526] text-white border-b-4 border-yellow-500 shadow-md ring-2 ring-blue-900/30'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            <BarChart3 size={18} className={activeView === 'annual_diff' ? 'text-yellow-400' : 'text-slate-500'} />
-            <span>فرق الاستهلاك السنوي</span>
-            <span
-              className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                activeView === 'annual_diff' ? 'bg-yellow-400 text-slate-900' : 'bg-slate-200 text-slate-700'
+      {/* Master Hero Banner */}
+      <HeroBanner />
+
+      {/* Main Content Container */}
+      <main className="flex-grow w-full max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 py-5">
+        <div className="bg-[#f8fafc] rounded-2xl shadow-md border border-slate-200/90 p-3 sm:p-5 md:p-6 min-h-[500px]">
+          {/* Navigation Tabs Row (Matching Reference Layout) */}
+          <div className="flex flex-wrap items-center justify-start gap-2.5 sm:gap-3 mb-5 print:hidden">
+            {/* Tab 1: جدول الاستهلاك الشهري (ساهر) */}
+            <button
+              type="button"
+              onClick={() => setActiveView('monthly')}
+              className={`flex items-center gap-2.5 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
+                activeView === 'monthly'
+                  ? 'bg-[#0b192c] text-white border-b-[3px] border-[#eab308] shadow-md'
+                  : 'bg-white text-[#0b192c] hover:bg-slate-100 border border-slate-200 shadow-xs'
               }`}
             >
-              الجدول الرئيسي
-            </span>
-          </button>
-        </div>
+              <TableProperties
+                size={17}
+                className={activeView === 'monthly' ? 'text-[#eab308]' : 'text-slate-500'}
+              />
+              <span>جدول الاستهلاك الشهري (ساهر)</span>
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold font-mono tabular-nums bg-[#e0f2fe] text-[#0369a1]">
+                {currentYear}
+              </span>
+            </button>
 
-        {/* Card Container */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 md:p-6 min-h-[500px]">
+            {/* Tab 2: فرق الاستهلاك السنوي */}
+            <button
+              type="button"
+              onClick={() => setActiveView('annual_diff')}
+              className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
+                activeView === 'annual_diff'
+                  ? 'bg-[#0b192c] text-white border-b-[3px] border-[#eab308] shadow-md'
+                  : 'bg-white text-[#0b192c] hover:bg-slate-100 border border-slate-200 shadow-xs'
+              }`}
+            >
+              <span>فرق الاستهلاك السنوي</span>
+              <BarChart3
+                size={17}
+                className={activeView === 'annual_diff' ? 'text-[#eab308]' : 'text-slate-600'}
+              />
+            </button>
+
+            {/* Tab 3: الجدول الرئيسي */}
+            <button
+              type="button"
+              onClick={() => setActiveView('monthly')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
+                activeView === 'monthly'
+                  ? 'bg-white text-slate-700 border border-slate-200 shadow-xs hover:bg-slate-50'
+                  : 'bg-[#0b192c] text-white border-b-[2px] border-[#eab308] shadow-xs'
+              }`}
+            >
+              <span>الجدول الرئيسي</span>
+            </button>
+          </div>
+
           {activeView === 'annual_diff' ? (
             <AnnualConsumptionSystem onBackToMonthly={() => setActiveView('monthly')} />
           ) : (
-            <ConsumptionTable 
-              year={currentYear} 
-              data={currentSitesData}
-              archivedData={currentArchivedData}
-              onDataChange={handleDataChange}
-              onAddSite={handleGlobalAddSite}
-              onSiteMetadataUpdate={handleSiteMetadataUpdate}
-              onArchiveSite={handleArchiveSite}
-              onRestoreSite={handleRestoreSite}
-              onDeletePermanently={handleDeletePermanently}
-              onSave={handleManualSave}
-              onOpenAnnualComparison={() => setActiveView('annual_diff')}
-            />
+            <>
+              {/* 5 KPI Summary Cards Row */}
+              <MonthlyKpiCards
+                currentSites={currentSitesData}
+                previousYearSites={previousYearSitesData}
+              />
+
+              {/* Main Monthly Consumption Table & Controls */}
+              <ConsumptionTable
+                year={currentYear}
+                data={currentSitesData}
+                archivedData={currentArchivedData}
+                onDataChange={handleDataChange}
+                onAddSite={handleGlobalAddSite}
+                onSiteMetadataUpdate={handleSiteMetadataUpdate}
+                onArchiveSite={handleArchiveSite}
+                onRestoreSite={handleRestoreSite}
+                onDeletePermanently={handleDeletePermanently}
+                onSave={handleManualSave}
+                onOpenAnnualComparison={() => setActiveView('annual_diff')}
+              />
+            </>
           )}
         </div>
       </main>
-      
+
+      {/* Corporate Footer */}
       <Footer />
     </div>
   );
